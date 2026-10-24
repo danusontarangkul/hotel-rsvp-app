@@ -1,0 +1,37 @@
+# web/CLAUDE.md
+
+Front end conventions.
+
+## Buttons
+
+- Use `components/shared/Button.tsx` for every button.
+- A button that sends a request is disabled and shows a loading label (e.g. "Booking...") while the request runs.
+- A submit button is disabled while required fields are empty or invalid.
+- Every button has a visible focus style.
+
+## Loading
+
+- A page or section that fetches data shows a loading message until the data arrives.
+- Nothing shows stale data after a successful change; refetch or update state.
+
+## Errors
+
+- Show errors with `components/shared/ErrorMessage.tsx`.
+- API errors show the response's `message`. For a `400`, show each message in the list.
+- Field errors show under the field.
+- A failed request leaves the form filled in.
+- A `401` redirects to `/staff/login`.
+
+## Empty states
+
+- A list with no items shows a message (e.g. "No bookings").
+
+## Forms
+
+- Use `components/shared/TextInput.tsx` for inputs, each with a label.
+- Inputs use `required`, `type="email"` and `minLength` where they apply.
+
+## Modals
+
+- Use `components/shared/Modal.tsx` as the base.
+- Close with a close button, Escape or a click outside, except while a request runs.
