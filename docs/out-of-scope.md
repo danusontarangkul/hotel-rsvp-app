@@ -1,6 +1,6 @@
 # Hotel Booking App: Out of Scope and Future Improvements
 
-Things that would make the app better but are deliberately left out of this build.
+Not included in this build.
 
 ## Staff and accounts
 
