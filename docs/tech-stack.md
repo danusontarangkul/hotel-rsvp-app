@@ -8,7 +8,7 @@ Two apps in one GitHub repository:
 - **`api/`**: NestJS back end. Booking rules, staff auth and database access.
 
 ```
-Browser ──> Next.js (Vercel) ──/api/* rewrite──> NestJS (Render or Railway) ──> MongoDB Atlas
+Browser ──> Next.js (Vercel) ──/api/* rewrite──> NestJS (Vercel) ──> MongoDB Atlas
 ```
 
 Next.js forwards `/api/*` to NestJS with a rewrite in `next.config`.
@@ -21,7 +21,7 @@ Next.js forwards `/api/*` to NestJS with a rewrite in `next.config`.
 | Front end | Next.js (App Router), hosted on Vercel |
 | Styling | Tailwind CSS |
 | Calendar UI | react-day-picker |
-| Back end | NestJS, hosted on Render or Railway |
+| Back end | NestJS, hosted on Vercel |
 | Validation | NestJS DTOs + class-validator + class-transformer |
 | Database | MongoDB Atlas (free tier) |
 | Data access | Mongoose via `@nestjs/mongoose` |
