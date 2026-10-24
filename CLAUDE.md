@@ -25,8 +25,3 @@ npx tsc --noEmit
 npm test
 npm run test:e2e     # api only
 ```
-
-## Writing
-
-- Write "User Story", never "US".
-- Docs are facts only, kept minimal, no tradeoffs or analysis.
