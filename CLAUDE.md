@@ -28,4 +28,6 @@ npm run test:e2e     # api only
 
 ## Rules
 
-No TypeScript any
+- No TypeScript any
+- Never write comments in code. No `//`, `/* */`, JSDoc or JSX comments. Make the code explain itself with clear names instead.
+- Every `if`, `else`, `for` and `while` body goes in braces on its own line, even a one-liner. No `if (x) doSomething();`. ESLint enforces this with `curly: 'all'` in both apps.

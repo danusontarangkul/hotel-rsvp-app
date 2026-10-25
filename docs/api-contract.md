@@ -101,7 +101,7 @@ User Story 3.
 | Status | When |
 |---|---|
 | 400 | A rule above is broken. |
-| 409 | Email is already registered. |
+| 409 | Email is already registered. `message` is exactly `Email is already registered.` (the sign up page shows it under the email field). |
 
 ## POST /api/auth/login
 
