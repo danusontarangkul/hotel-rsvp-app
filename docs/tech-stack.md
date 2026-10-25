@@ -84,12 +84,15 @@ Next.js forwards `/api/*` to NestJS with a rewrite in `next.config`.
 
 ## CI and deployment
 
-GitHub Actions runs on every pull request and push to `main`, for both `web/` and `api/`:
+GitHub Actions (`.github/workflows/ci.yml`) runs on every push to any branch. `web/` and `api/` run as two parallel jobs, each skipped until that app has a `package-lock.json`. A new push cancels the running CI for the same branch.
 
-1. Install dependencies.
+1. Install dependencies (`npm ci`, Node 22, npm cache).
 2. Lint.
-3. Type check (`tsc --noEmit`).
-4. Test.
+3. Format check (`prettier --check`).
+4. Type check (`tsc --noEmit`).
+5. Test.
+6. End-to-end test (`api/` only, mongodb-memory-server binary cached).
+7. Build.
 
 Vercel deploys `web/` (root directory `web`) and Render or Railway deploys `api/` (root directory `api`) from GitHub.
 

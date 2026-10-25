@@ -1,0 +1,67 @@
+name: CI
+
+on: push
+
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  detect:
+    runs-on: ubuntu-latest
+    outputs:
+      web: ${{ steps.apps.outputs.web }}
+      api: ${{ steps.apps.outputs.api }}
+    steps:
+      - uses: actions/checkout@v4
+      - id: apps
+        run: |
+          echo "web=$([ -f web/package-lock.json ] && echo true || echo false)" >> "$GITHUB_OUTPUT"
+          echo "api=$([ -f api/package-lock.json ] && echo true || echo false)" >> "$GITHUB_OUTPUT"
+
+  web:
+    needs: detect
+    if: needs.detect.outputs.web == 'true'
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: web
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+          cache-dependency-path: web/package-lock.json
+      - run: npm ci
+      - run: npm run lint
+      - run: npx prettier --check .
+      - run: npx tsc --noEmit
+      - run: npm test
+      - run: npm run build
+
+  api:
+    needs: detect
+    if: needs.detect.outputs.api == 'true'
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: api
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+          cache-dependency-path: api/package-lock.json
+      - uses: actions/cache@v4
+        with:
+          path: ~/.cache/mongodb-binaries
+          key: mongodb-binaries-${{ hashFiles('api/package-lock.json') }}
+      - run: npm ci
+      - run: npm run lint
+      - run: npx prettier --check .
+      - run: npx tsc --noEmit
+      - run: npm test
+      - run: npm run test:e2e
+      - run: npm run build
