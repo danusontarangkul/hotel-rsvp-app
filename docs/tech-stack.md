@@ -34,7 +34,7 @@ Next.js forwards `/api/*` to NestJS with a rewrite in `next.config`.
 | CI | GitHub Actions |
 | Design | Figma |
 | AI coding | Claude Code |
-| Runtime | Node.js (LTS), one package manager (npm or pnpm) for both apps |
+| Runtime | Node.js (LTS), npm for both apps |
 
 ## Validation
 

@@ -64,8 +64,9 @@ web/
 ├── .env.example
 ├── jest.config.ts
 ├── jest.setup.ts
-├── tailwind.config.ts
 ├── eslint.config.mjs
+├── AGENTS.md
+├── CLAUDE.md
 └── tsconfig.json
 ```
 
@@ -161,6 +162,7 @@ Unit tests (`*.spec.ts`) sit next to the file they test. End-to-end tests live i
 ### Front end
 
 - No `src/` folder.
+- Tailwind CSS v4 is set up in `app/globals.css`; no `tailwind.config.ts`.
 - No `app/api/` folder; all `/api/*` requests go through the rewrite to NestJS.
 - All data is fetched in client components with relative `/api/...` URLs.
 - The booking confirmation is shown in the booking modal.
