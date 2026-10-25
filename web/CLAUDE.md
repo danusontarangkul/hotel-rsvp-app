@@ -6,6 +6,10 @@ Front end conventions.
 
 - Reuse components in `components/shared/` wherever possible. Add a new shared component instead of repeating markup.
 
+## Utils
+
+- Logic likely to be reused goes in a util function in `lib/`, with a test next to it.
+
 ## Buttons
 
 - Use `components/shared/Button.tsx` for every button.
