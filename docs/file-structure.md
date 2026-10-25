@@ -167,7 +167,7 @@ Unit tests (`*.spec.ts`) sit next to the file they test. End-to-end tests live i
 - All data is fetched in client components with relative `/api/...` URLs.
 - The booking confirmation is shown in the booking modal.
 - Modals are React state on the page, not routes. `shared/Modal.tsx` is the base modal for `BookingModal` and `CancelBookingModal`.
-- A footer link leads to the staff login page. No `/staff` index page.
+- A header link leads to the staff login page. No footer. No `/staff` index page.
 - The log-out button is on the bookings page. No separate staff layout.
 - No `loading.tsx`, `error.tsx` or middleware.
 

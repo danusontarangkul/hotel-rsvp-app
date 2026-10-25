@@ -25,3 +25,7 @@ npx tsc --noEmit
 npm test
 npm run test:e2e     # api only
 ```
+
+## Rules
+
+No TypeScript any
