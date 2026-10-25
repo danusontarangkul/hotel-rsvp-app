@@ -34,7 +34,7 @@ export default function TextInput({
           required={required}
           aria-invalid={hasError}
           aria-describedby={errorId}
-          className={`w-full rounded-md border bg-surface px-3 py-2.5 text-sm text-foreground focus-visible:outline-2 focus-visible:outline-offset-1 focus-visible:outline-primary ${trailing ? 'pr-10' : ''} ${hasError ? 'border-error' : 'border-border'}`}
+          className={`w-full rounded-md border bg-surface px-3 py-2.5 text-sm text-foreground placeholder:text-muted focus-visible:outline-2 focus-visible:outline-offset-1 focus-visible:outline-primary ${trailing ? 'pr-10' : ''} ${hasError ? 'border-error' : 'border-border'}`}
           {...props}
         />
         {trailing && <div className="absolute right-2 flex">{trailing}</div>}

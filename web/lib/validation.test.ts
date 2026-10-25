@@ -1,4 +1,9 @@
-import { isFilled, isValidEmail, isValidPassword } from './validation';
+import {
+  isFilled,
+  isValidEmail,
+  isValidPassword,
+  PASSWORD_TOO_SHORT_MESSAGE,
+} from './validation';
 
 describe('isFilled', () => {
   it('accepts text', () => {
@@ -47,5 +52,13 @@ describe('isValidPassword', () => {
 
   it('rejects a password of 7 characters', () => {
     expect(isValidPassword('1234567')).toBe(false);
+  });
+});
+
+describe('PASSWORD_TOO_SHORT_MESSAGE', () => {
+  it('states the minimum password length', () => {
+    expect(PASSWORD_TOO_SHORT_MESSAGE).toBe(
+      'Password must be at least 8 characters.',
+    );
   });
 });

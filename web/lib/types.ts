@@ -10,6 +10,11 @@ export type SignupInput = {
   password: string;
 };
 
+export type LoginInput = {
+  email: string;
+  password: string;
+};
+
 export type ApiErrorBody = {
   statusCode: number;
   message: string | string[];

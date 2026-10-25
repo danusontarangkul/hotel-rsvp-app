@@ -42,6 +42,7 @@ Link to a frame: `https://www.figma.com/design/y8tAJJMZDW2c5K0sspUj0D/Untitled?n
 - Reuse components in `components/shared/` wherever possible. Add a new shared component instead of repeating markup.
 - Every page is wrapped in `Page` (`width="narrow"` for single forms, `"wide"` for everything else) and has one `PageHeading`. No raw `<main>` or `<h1>` in pages.
 - Every form uses `Form`, so fields and actions have the same spacing. No raw `<form>`.
+- `Form` lays out every form the same way: fields (`children`), then the buttons (`actions`), then the form-level errors (`errors`) at the bottom. Pass form-level errors to `Form`; don't render `ErrorMessage` for them yourself.
 - Shared components own their styling and don't accept `className`, so every use looks the same. If a new look is needed, add a variant prop (like `Page`'s `width`), not a class override.
 
 ## TypeScript
@@ -95,7 +96,7 @@ Link to a frame: `https://www.figma.com/design/y8tAJJMZDW2c5K0sspUj0D/Untitled?n
 
 - No layout shifts. Showing or hiding content must not move what's around it.
 - Every field reserves space for one line of error text under it, so a field error appears without pushing the form down.
-- Form-level error messages have a reserved slot that is always in the layout, empty when there's no error.
+- Form-level error messages have a reserved slot under the form's buttons (rendered by `Form`) that is always in the layout, empty when there's no error.
 - Loading states take the same space as what replaces them (e.g. a button keeps its size while showing the spinner).
 
 ## Empty states
