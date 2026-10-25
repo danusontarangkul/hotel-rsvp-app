@@ -2,11 +2,15 @@
 
 Front end conventions.
 
+## Shared components
+
+- Reuse components in `components/shared/` wherever possible. Add a new shared component instead of repeating markup.
+
 ## Buttons
 
 - Use `components/shared/Button.tsx` for every button.
 - A button that sends a request is disabled and shows a loading label (e.g. "Booking...") while the request runs.
-- A submit button is disabled while required fields are empty or invalid.
+- A form's submit button is disabled until all required fields are filled.
 - Every button has a visible focus style.
 
 ## Loading
@@ -34,4 +38,5 @@ Front end conventions.
 ## Modals
 
 - Use `components/shared/Modal.tsx` as the base.
+- Every modal has a primary action (e.g. Book, Cancel booking) and a secondary action (e.g. Close, Keep booking).
 - Close with a close button, Escape or a click outside, except while a request runs.
