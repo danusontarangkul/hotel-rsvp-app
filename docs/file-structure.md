@@ -51,13 +51,47 @@ web/
 │   │   └── CancelBookingModal.test.tsx
 │   └── shared/
 │       ├── Button.tsx
+│       ├── Button.test.tsx
+│       ├── Card.tsx
+│       ├── Card.test.tsx
+│       ├── icons.tsx
+│       ├── icons.test.tsx
+│       ├── PasswordInput.tsx
+│       ├── PasswordInput.test.tsx
+│       ├── TextLink.tsx
+│       ├── TextLink.test.tsx
 │       ├── Modal.tsx
 │       ├── TextInput.tsx
-│       └── ErrorMessage.tsx
+│       ├── TextInput.test.tsx
+│       ├── ErrorMessage.tsx
+│       ├── ErrorMessage.test.tsx
+│       ├── Form.tsx
+│       ├── Form.test.tsx
+│       ├── Page.tsx
+│       ├── Page.test.tsx
+│       ├── PageHeading.tsx
+│       ├── PageHeading.test.tsx
+│       ├── Spinner.tsx
+│       └── Spinner.test.tsx
+├── hooks/
+│   ├── useApiMutation.ts
+│   ├── useApiMutation.test.ts
+│   ├── useSignup.ts
+│   ├── useSignup.test.ts
+│   ├── useLogin.ts
+│   ├── useLogin.test.ts
+│   ├── useCreateBooking.ts
+│   ├── useCreateBooking.test.ts
+│   ├── useCancelBooking.ts
+│   └── useCancelBooking.test.ts
 ├── lib/
 │   ├── api.ts
 │   ├── api.test.ts
 │   ├── types.ts
+│   ├── form-errors.ts
+│   ├── form-errors.test.ts
+│   ├── validation.ts
+│   ├── validation.test.ts
 │   ├── dates.ts
 │   └── dates.test.ts
 ├── next.config.ts
@@ -160,6 +194,7 @@ Unit tests (`*.spec.ts`) sit next to the file they test. End-to-end tests live i
 ### Front end
 
 - No `src/` folder.
+- Components make API requests through hooks in `hooks/`, which call `lib/api.ts`; components don't import `lib/api.ts` request functions.
 - Tailwind CSS v4 is set up in `app/globals.css`; no `tailwind.config.ts`.
 - No `app/api/` folder; all `/api/*` requests go through the rewrite to NestJS.
 - All data is fetched in client components with relative `/api/...` URLs.
