@@ -21,7 +21,7 @@ Next.js forwards `/api/*` to NestJS with a rewrite in `next.config`.
 | Front end | Next.js (App Router), hosted on Vercel |
 | Styling | Tailwind CSS |
 | Calendar UI | react-day-picker |
-| Back end | NestJS, hosted on Vercel |
+| Back end | NestJS 11 (not 12, which switches to Vitest and oxlint), hosted on Vercel |
 | Validation | NestJS DTOs + class-validator + class-transformer |
 | Database | MongoDB Atlas (free tier) |
 | Data access | Mongoose via `@nestjs/mongoose` |
@@ -73,7 +73,7 @@ Next.js forwards `/api/*` to NestJS with a rewrite in `next.config`.
 
 ## Environment variables
 
-`.env` files are not committed. Each app commits a `.env.example` with names only.
+`.env` files are not committed. Each app reads its variables from its own `.env` locally and from the Vercel project settings in production.
 
 | App | Variable | Purpose |
 |---|---|---|

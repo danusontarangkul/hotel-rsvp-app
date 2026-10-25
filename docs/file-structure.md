@@ -61,7 +61,6 @@ web/
 │   ├── dates.ts
 │   └── dates.test.ts
 ├── next.config.ts
-├── .env.example
 ├── jest.config.ts
 ├── jest.setup.ts
 ├── eslint.config.mjs
@@ -139,7 +138,6 @@ api/
 │   ├── auth.e2e-spec.ts
 │   ├── bookings.e2e-spec.ts
 │   └── jest-e2e.json
-├── .env.example
 ├── nest-cli.json
 ├── eslint.config.mjs
 ├── tsconfig.json
@@ -175,7 +173,6 @@ Unit tests (`*.spec.ts`) sit next to the file they test. End-to-end tests live i
 
 - `main.ts` sets the global `/api` prefix, `cookie-parser` and the global `ValidationPipe`.
 - `app.module.ts` loads `@nestjs/config` and connects Mongoose with `MONGODB_URI`.
-- `.env.example` lists `MONGODB_URI`, `JWT_SECRET` and `PORT`.
 - `auth.guard.ts` reads the `token` cookie and guards the two staff-only booking endpoints.
 - `staff/` has no controller; only `auth/` uses it.
 - Booking rules live in `bookings.service.ts`.
