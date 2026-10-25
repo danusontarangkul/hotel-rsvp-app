@@ -1,4 +1,4 @@
-import type { ApiErrorBody, SignupInput, Staff } from './types';
+import type { ApiErrorBody, LoginInput, SignupInput, Staff } from './types';
 
 export const GENERIC_ERROR_MESSAGE = 'Something went wrong. Please try again.';
 
@@ -42,6 +42,13 @@ async function request<T>(path: string, init: RequestInit): Promise<T> {
 
 export function signup(input: SignupInput): Promise<Staff> {
   return request<Staff>('/api/auth/signup', {
+    method: 'POST',
+    body: JSON.stringify(input),
+  });
+}
+
+export function login(input: LoginInput): Promise<Staff> {
+  return request<Staff>('/api/auth/login', {
     method: 'POST',
     body: JSON.stringify(input),
   });

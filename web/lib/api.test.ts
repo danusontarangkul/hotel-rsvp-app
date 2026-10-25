@@ -1,4 +1,4 @@
-import { ApiError, signup } from './api';
+import { ApiError, login, signup } from './api';
 
 const input = {
   name: 'Sam Lee',
@@ -68,5 +68,32 @@ describe('signup', () => {
       status: 500,
       messages: ['Something went wrong. Please try again.'],
     });
+  });
+});
+
+describe('login', () => {
+  it('posts the details to the log in endpoint and returns the staff member', async () => {
+    const staff = { id: '1', name: 'Sam Lee', email: 'sam@hotel.com' };
+    const details = { email: 'sam@hotel.com', password: 'at-least-8' };
+    mockFetch(200, staff);
+
+    await expect(login(details)).resolves.toEqual(staff);
+    expect(global.fetch).toHaveBeenCalledWith('/api/auth/login', {
+      method: 'POST',
+      body: JSON.stringify(details),
+      headers: { 'Content-Type': 'application/json' },
+    });
+  });
+
+  it('throws an ApiError with the message on a 401', async () => {
+    mockFetch(401, {
+      statusCode: 401,
+      message: 'Wrong email or password',
+      error: 'Unauthorized',
+    });
+
+    await expect(
+      login({ email: 'sam@hotel.com', password: 'nope' }),
+    ).rejects.toEqual(new ApiError(401, ['Wrong email or password']));
   });
 });

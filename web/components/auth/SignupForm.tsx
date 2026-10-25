@@ -3,7 +3,6 @@
 import { useState, type SubmitEvent } from 'react';
 import { useRouter } from 'next/navigation';
 import Button from '@/components/shared/Button';
-import ErrorMessage from '@/components/shared/ErrorMessage';
 import Form from '@/components/shared/Form';
 import PasswordInput from '@/components/shared/PasswordInput';
 import TextInput from '@/components/shared/TextInput';
@@ -15,6 +14,7 @@ import {
   isValidEmail,
   isValidPassword,
   MIN_PASSWORD_LENGTH,
+  PASSWORD_TOO_SHORT_MESSAGE,
 } from '@/lib/validation';
 
 const FIELDS = ['name', 'email', 'password'] as const;
@@ -33,7 +33,7 @@ export default function SignupForm() {
   const passwordTooShort =
     passwordTouched && isFilled(password) && !isValidPassword(password);
   const passwordErrors = passwordTooShort
-    ? [`Password must be at least ${MIN_PASSWORD_LENGTH} characters.`]
+    ? [PASSWORD_TOO_SHORT_MESSAGE]
     : errors.fields.password;
 
   async function handleSubmit(event: SubmitEvent<HTMLFormElement>) {
@@ -45,11 +45,25 @@ export default function SignupForm() {
   }
 
   return (
-    <Form onSubmit={handleSubmit}>
+    <Form
+      onSubmit={handleSubmit}
+      errors={errors.form}
+      actions={
+        <Button
+          type="submit"
+          disabled={!canSubmit}
+          loading={loading || data !== null}
+        >
+          Sign up
+          <ArrowRightIcon />
+        </Button>
+      }
+    >
       <TextInput
         label="Full name"
         name="name"
         autoComplete="name"
+        placeholder="Your full name"
         required
         value={name}
         onChange={(event) => setName(event.target.value)}
@@ -60,6 +74,7 @@ export default function SignupForm() {
         name="email"
         type="email"
         autoComplete="email"
+        placeholder="you@briarhouse.co"
         required
         value={email}
         onChange={(event) => setEmail(event.target.value)}
@@ -69,6 +84,7 @@ export default function SignupForm() {
         label="Password"
         name="password"
         autoComplete="new-password"
+        placeholder="At least 8 characters"
         required
         minLength={MIN_PASSWORD_LENGTH}
         value={password}
@@ -76,15 +92,6 @@ export default function SignupForm() {
         onBlur={() => setPasswordTouched(true)}
         errors={passwordErrors}
       />
-      <ErrorMessage messages={errors.form} />
-      <Button
-        type="submit"
-        disabled={!canSubmit}
-        loading={loading || data !== null}
-      >
-        Sign up
-        <ArrowRightIcon />
-      </Button>
     </Form>
   );
 }
