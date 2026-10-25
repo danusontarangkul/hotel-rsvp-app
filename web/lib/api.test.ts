@@ -1,11 +1,15 @@
 import {
   ApiError,
+  cancelBooking,
   createBooking,
   getAvailability,
+  getBookings,
   login,
+  logout,
   signup,
   toApiError,
 } from './api';
+import { resetMockBookings } from './mock-bookings';
 
 const input = {
   name: 'Sam Lee',
@@ -178,6 +182,71 @@ describe('toApiError', () => {
   it('turns any other error into an ApiError with a generic message', () => {
     expect(toApiError(new TypeError('Failed to fetch'))).toEqual(
       new ApiError(0, ['Something went wrong. Please try again.']),
+    );
+  });
+});
+
+describe('logout', () => {
+  it('posts to the log out endpoint', async () => {
+    global.fetch = jest.fn().mockResolvedValue({ ok: true, status: 204 });
+
+    await expect(logout()).resolves.toBeUndefined();
+    expect(global.fetch).toHaveBeenCalledWith('/api/auth/logout', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+    });
+  });
+
+  it('throws an ApiError when the request fails', async () => {
+    mockFetch(500, { statusCode: 500, message: 'Server down' });
+
+    await expect(logout()).rejects.toEqual(new ApiError(500, ['Server down']));
+  });
+});
+
+describe('getBookings', () => {
+  afterEach(() => {
+    resetMockBookings();
+  });
+
+  it('returns the mock bookings without calling the API', async () => {
+    global.fetch = jest.fn();
+
+    const bookings = await getBookings();
+
+    expect(bookings.length).toBeGreaterThan(0);
+    expect(global.fetch).not.toHaveBeenCalled();
+  });
+});
+
+describe('cancelBooking', () => {
+  afterEach(() => {
+    resetMockBookings();
+  });
+
+  it('returns the cancelled booking', async () => {
+    const [first] = await getBookings();
+
+    await expect(cancelBooking(first.id)).resolves.toMatchObject({
+      id: first.id,
+      status: 'cancelled',
+    });
+  });
+
+  it('throws a 404 ApiError for an unknown booking', async () => {
+    await expect(cancelBooking('missing')).rejects.toEqual(
+      new ApiError(404, ['Booking not found']),
+    );
+  });
+
+  it('throws a 409 ApiError for a booking that is already cancelled', async () => {
+    const bookings = await getBookings();
+    const cancelled = bookings.find(
+      (booking) => booking.status === 'cancelled',
+    )!;
+
+    await expect(cancelBooking(cancelled.id)).rejects.toEqual(
+      new ApiError(409, ['Booking is already cancelled']),
     );
   });
 });

@@ -23,19 +23,19 @@ type AvailabilityCalendarProps = {
 };
 
 const DAY_BUTTON_BASE =
-  'flex size-9 cursor-pointer items-center justify-center rounded-md border text-sm focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary disabled:cursor-not-allowed sm:size-10';
+  'flex size-9 cursor-pointer items-center transition-opacity enabled:hover:opacity-80 justify-center rounded-md border text-sm focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary disabled:cursor-not-allowed sm:size-10';
 
 function dayButtonClassName(modifiers: Modifiers): string {
   if (modifiers.stayStart || modifiers.stayEnd) {
     return `${DAY_BUTTON_BASE} border-primary bg-primary font-semibold text-on-primary`;
   }
   if (modifiers.unavailable) {
-    return `${DAY_BUTTON_BASE} border-transparent bg-unavailable text-muted line-through`;
+    return `${DAY_BUTTON_BASE} border-transparent bg-surface-muted text-muted line-through`;
   }
   if (modifiers.inStay) {
     return `${DAY_BUTTON_BASE} border-transparent bg-accent-soft text-foreground`;
   }
-  return `${DAY_BUTTON_BASE} border-border bg-surface text-foreground hover:border-primary`;
+  return `${DAY_BUTTON_BASE} border-border bg-surface text-foreground`;
 }
 
 function StayDayButton({ day, modifiers, ...props }: DayButtonProps) {
@@ -60,7 +60,7 @@ function StayDayButton({ day, modifiers, ...props }: DayButtonProps) {
 
 const LEGEND = [
   { label: 'Available', swatch: 'border border-border bg-surface' },
-  { label: 'Unavailable', swatch: 'border border-muted/50 bg-unavailable' },
+  { label: 'Unavailable', swatch: 'border border-muted/50 bg-surface-muted' },
   { label: 'Selected', swatch: 'bg-primary' },
 ];
 
@@ -104,9 +104,9 @@ export default function AvailabilityCalendar({
           caption_label: 'font-heading text-lg text-foreground',
           nav: 'absolute right-0 top-0 flex gap-1',
           button_previous:
-            'flex size-8 cursor-pointer items-center justify-center rounded text-muted hover:text-foreground focus-visible:outline-2 focus-visible:outline-primary disabled:cursor-not-allowed disabled:opacity-30',
+            'flex size-8 cursor-pointer items-center justify-center rounded text-muted transition-opacity enabled:hover:opacity-80 focus-visible:outline-2 focus-visible:outline-primary disabled:cursor-not-allowed disabled:opacity-30',
           button_next:
-            'flex size-8 cursor-pointer items-center justify-center rounded text-muted hover:text-foreground focus-visible:outline-2 focus-visible:outline-primary disabled:cursor-not-allowed disabled:opacity-30',
+            'flex size-8 cursor-pointer items-center justify-center rounded text-muted transition-opacity enabled:hover:opacity-80 focus-visible:outline-2 focus-visible:outline-primary disabled:cursor-not-allowed disabled:opacity-30',
           chevron: 'size-4 fill-current',
           month_grid: 'border-separate border-spacing-1',
           weekday: 'text-xs font-normal text-muted',

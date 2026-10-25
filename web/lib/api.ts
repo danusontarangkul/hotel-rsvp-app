@@ -1,8 +1,10 @@
 import { addDays } from 'date-fns';
 import { toDateString } from './dates';
+import { cancelMockBooking, listMockBookings } from './mock-bookings';
 import type {
   ApiErrorBody,
   Availability,
+  Booking,
   BookingConfirmation,
   CreateBookingInput,
   LoginInput,
@@ -56,6 +58,16 @@ async function request<T>(path: string, init: RequestInit): Promise<T> {
   return (await response.json()) as T;
 }
 
+async function send(path: string, init: RequestInit): Promise<void> {
+  const response = await fetch(path, {
+    ...init,
+    headers: { 'Content-Type': 'application/json', ...init.headers },
+  });
+  if (!response.ok) {
+    throw new ApiError(response.status, await readErrorMessages(response));
+  }
+}
+
 export function signup(input: SignupInput): Promise<Staff> {
   return request<Staff>('/api/auth/signup', {
     method: 'POST',
@@ -84,4 +96,23 @@ export function createBooking(
     method: 'POST',
     body: JSON.stringify(input),
   });
+}
+
+export function logout(): Promise<void> {
+  return send('/api/auth/logout', { method: 'POST' });
+}
+
+export function getBookings(): Promise<Booking[]> {
+  return Promise.resolve(listMockBookings());
+}
+
+export function cancelBooking(id: string): Promise<Booking> {
+  const result = cancelMockBooking(id);
+  if (result === 'not-found') {
+    return Promise.reject(new ApiError(404, ['Booking not found']));
+  }
+  if (result === 'already-cancelled') {
+    return Promise.reject(new ApiError(409, ['Booking is already cancelled']));
+  }
+  return Promise.resolve(result);
 }

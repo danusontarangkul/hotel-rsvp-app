@@ -46,12 +46,18 @@ web/
 │   │   ├── SignupForm.test.tsx
 │   │   ├── LoginForm.tsx
 │   │   ├── LoginForm.test.tsx
-│   │   └── LogoutButton.tsx
+│   │   ├── LogoutButton.tsx
+│   │   └── LogoutButton.test.tsx
 │   ├── staff/
+│   │   ├── BookingsSection.tsx
+│   │   ├── BookingsSection.test.tsx
 │   │   ├── BookingsTable.tsx
 │   │   ├── BookingsTable.test.tsx
+│   │   ├── BookingStatusBadge.tsx
+│   │   ├── BookingStatusBadge.test.tsx
 │   │   ├── CancelBookingModal.tsx
-│   │   └── CancelBookingModal.test.tsx
+│   │   ├── CancelBookingModal.test.tsx
+│   │   └── testBookings.ts
 │   └── shared/
 │       ├── Actions.tsx
 │       ├── Actions.test.tsx
@@ -68,17 +74,29 @@ web/
 │       ├── TextLink.tsx
 │       ├── TextLink.test.tsx
 │       ├── LoadingMessage.tsx
+│       ├── LoadError.tsx
+│       ├── LoadError.test.tsx
 │       ├── LoadingMessage.test.tsx
 │       ├── Modal.tsx
 │       ├── Modal.test.tsx
+│       ├── NavLink.tsx
+│       ├── NavLink.test.tsx
 │       ├── SectionHeading.tsx
 │       ├── SectionHeading.test.tsx
 │       ├── SiteHeader.tsx
 │       ├── SiteHeader.test.tsx
+│       ├── Skeleton.tsx
+│       ├── Skeleton.test.tsx
+│       ├── Table.tsx
+│       ├── Table.test.tsx
+│       ├── TableSkeleton.tsx
+│       ├── TableSkeleton.test.tsx
 │       ├── TextInput.tsx
 │       ├── TextInput.test.tsx
 │       ├── EmailInput.tsx
 │       ├── EmailInput.test.tsx
+│       ├── EmptyState.tsx
+│       ├── EmptyState.test.tsx
 │       ├── ErrorMessage.tsx
 │       ├── ErrorMessage.test.tsx
 │       ├── Form.tsx
@@ -105,11 +123,17 @@ web/
 │   ├── useCreateBooking.ts
 │   ├── useCreateBooking.test.ts
 │   ├── useCancelBooking.ts
-│   └── useCancelBooking.test.ts
+│   ├── useCancelBooking.test.ts
+│   ├── useLogout.ts
+│   ├── useLogout.test.ts
+│   ├── useRedirectOnUnauthorized.ts
+│   └── useRedirectOnUnauthorized.test.ts
 ├── lib/
 │   ├── api.ts
 │   ├── api.test.ts
 │   ├── types.ts
+│   ├── mock-bookings.ts
+│   ├── mock-bookings.test.ts
 │   ├── form-errors.ts
 │   ├── form-errors.test.ts
 │   ├── phone.ts
@@ -151,7 +175,7 @@ Tests (`*.test.tsx`, `*.test.ts`) sit next to the file they test and run with Je
 
 - `/` → pick a check-in then a check-out on the calendar → the "Your stay" panel beside it shows the dates and the guest details form → book → a modal shows the booking number and dates → close → the form clears and the calendar reloads with the new dates blocked.
 - On a booking `409`, a modal shows "Dates no longer available" with the API message; closing it clears the dates (the guest details stay filled in) and reloads availability.
-- `/staff/bookings` → Cancel on a row → confirmation modal → confirm → row shows as cancelled. Closing the modal does nothing.
+- `/staff/bookings` → "Cancel booking" on a row → "Cancel this booking?" modal → "Cancel booking" → the list reloads and the row shows as cancelled. "Keep booking", ×, Escape or a click outside closes the modal and changes nothing.
 - `/staff/signup` or `/staff/login` → success → `/staff/bookings`
 - `/staff/bookings` → `401` from the API → `/staff/login`
 - Log out → `/staff/login`
@@ -224,8 +248,10 @@ Unit tests (`*.spec.ts`) sit next to the file they test. End-to-end tests live i
 - All data is fetched in client components with relative `/api/...` URLs.
 - The booking form is a side panel next to the calendar (stacked under it on small screens), not a modal. `BookingSection` holds the selected dates and the booking request. The confirmation and the "no longer available" message are shown in `BookingModal`.
 - Modals are React state on the page, not routes. `shared/Modal.tsx` is the base modal for `BookingModal` and `CancelBookingModal`.
-- `shared/SiteHeader.tsx` ("Hotel RSVP" and a "Staff log in" link) is on the guest page `/` only, not in `layout.tsx`; staff pages have no header. No footer. No `/staff` index page.
-- The log-out button is on the bookings page. No separate staff layout.
+- `shared/SiteHeader.tsx` is added per page, not in `layout.tsx`. On `/` it has a "Staff log in" link; on `/staff/bookings` it has a "Bookings" `NavLink` and the `LogoutButton`. Sign up and log in have no header. No footer. No `/staff` index page. No separate staff layout.
+- Log out always goes to `/staff/login`, even if the request fails.
+- Staff pages call `useRedirectOnUnauthorized(...errors)` so a `401` from any of their requests goes to `/staff/login`. Forms that expect a `401` (log in) don't use it.
+- Tables use `shared/Table.tsx` (`Table`, `TableRow`, `TableCell`). On screens narrower than `lg` each row shows as a card: the header row is hidden and each `TableCell` shows its `label`. Nothing scrolls sideways.
 - No `loading.tsx`, `error.tsx` or middleware.
 
 ### Back end

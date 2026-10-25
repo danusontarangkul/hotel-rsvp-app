@@ -1,9 +1,8 @@
 'use client';
 
 import { useState } from 'react';
-import Button from '@/components/shared/Button';
 import Card from '@/components/shared/Card';
-import ErrorMessage from '@/components/shared/ErrorMessage';
+import LoadError from '@/components/shared/LoadError';
 import LoadingMessage from '@/components/shared/LoadingMessage';
 import SectionHeading from '@/components/shared/SectionHeading';
 import { useAvailability } from '@/hooks/useAvailability';
@@ -71,10 +70,10 @@ export default function BookingSection() {
           <LoadingMessage>Loading available dates…</LoadingMessage>
         )}
         {availability.error && (
-          <div className="flex flex-col items-start gap-3 py-8">
-            <ErrorMessage messages={availability.error.messages} />
-            <Button onClick={availability.refetch}>Try again</Button>
-          </div>
+          <LoadError
+            messages={availability.error.messages}
+            onRetry={availability.refetch}
+          />
         )}
         {availability.data && (
           <AvailabilityCalendar

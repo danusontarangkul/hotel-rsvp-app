@@ -11,12 +11,21 @@ describe('SiteHeader', () => {
     );
   });
 
-  it('links to the staff log in page', () => {
+  it('shows its navigation links', () => {
+    render(<SiteHeader nav={<a href="/staff/bookings">Bookings</a>} />);
+
+    expect(screen.getByRole('navigation')).toHaveTextContent('Bookings');
+  });
+
+  it('has no navigation when none is given', () => {
     render(<SiteHeader />);
 
-    expect(screen.getByRole('link', { name: 'Staff log in' })).toHaveAttribute(
-      'href',
-      '/staff/login',
-    );
+    expect(screen.queryByRole('navigation')).not.toBeInTheDocument();
+  });
+
+  it('shows its actions', () => {
+    render(<SiteHeader actions={<button type="button">Log out</button>} />);
+
+    expect(screen.getByRole('button', { name: 'Log out' })).toBeInTheDocument();
   });
 });

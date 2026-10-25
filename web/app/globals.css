@@ -3,14 +3,15 @@
 @theme {
   --color-background: #f7f5f0;
   --color-surface: #ffffff;
+  --color-surface-subtle: #fbfbf8;
+  --color-surface-muted: #f2f2ec;
   --color-foreground: #263a32;
-  --color-muted: #6b756f;
-  --color-border: #e3e0d8;
-  --color-accent-soft: #dce6df;
-  --color-unavailable: #ebe8e1;
+  --color-muted: #72766e;
+  --color-border: #dedfd6;
+  --color-accent-soft: #eaf0e9;
   --color-primary: #294f40;
   --color-on-primary: #ffffff;
-  --color-error: #b42318;
+  --color-error: #a43e32;
 }
 
 @theme inline {

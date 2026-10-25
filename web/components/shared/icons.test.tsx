@@ -1,10 +1,17 @@
 import { render } from '@testing-library/react';
-import { ArrowRightIcon, CloseIcon, EyeIcon, EyeOffIcon } from './icons';
+import {
+  ArrowRightIcon,
+  CloseIcon,
+  EyeIcon,
+  EyeOffIcon,
+  LogOutIcon,
+} from './icons';
 
 describe('icons', () => {
   it.each([
     ['ArrowRightIcon', ArrowRightIcon],
     ['CloseIcon', CloseIcon],
+    ['LogOutIcon', LogOutIcon],
     ['EyeIcon', EyeIcon],
     ['EyeOffIcon', EyeOffIcon],
   ])('%s is hidden from screen readers', (_, IconComponent) => {

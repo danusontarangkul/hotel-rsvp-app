@@ -37,6 +37,18 @@ export type BookingConfirmation = {
   checkOut: string;
 };
 
+export type BookingStatus = 'active' | 'cancelled';
+
+export type Booking = GuestDetails & {
+  id: string;
+  bookingNumber: string;
+  checkIn: string;
+  checkOut: string;
+  status: BookingStatus;
+  createdAt: string;
+  cancelledAt: string | null;
+};
+
 export type ApiErrorBody = {
   statusCode: number;
   message: string | string[];
