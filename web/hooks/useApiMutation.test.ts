@@ -88,4 +88,22 @@ describe('useApiMutation', () => {
 
     expect(result.current.error).toBeNull();
   });
+
+  it('clears the response and error on reset', async () => {
+    request.mockResolvedValue('done');
+    const { result } = renderHook(() => useApiMutation(request));
+    await act(async () => {
+      await result.current.run(1);
+    });
+
+    act(() => {
+      result.current.reset();
+    });
+
+    expect(result.current).toMatchObject({
+      loading: false,
+      error: null,
+      data: null,
+    });
+  });
 });

@@ -29,7 +29,7 @@ export default function Button({
       type={type}
       disabled={disabled || loading}
       aria-busy={loading}
-      className={`inline-grid focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary disabled:cursor-not-allowed disabled:opacity-50 ${VARIANTS[variant]}`}
+      className={`inline-grid cursor-pointer focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary disabled:cursor-not-allowed disabled:opacity-50 ${VARIANTS[variant]}`}
     >
       <span
         className={`col-start-1 row-start-1 inline-flex items-center justify-center gap-2 ${loading ? 'opacity-0' : ''}`}

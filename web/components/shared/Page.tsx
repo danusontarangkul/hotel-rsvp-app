@@ -7,7 +7,7 @@ type PageProps = {
 
 const WIDTHS: Record<NonNullable<PageProps['width']>, string> = {
   narrow: 'max-w-md',
-  wide: 'max-w-3xl',
+  wide: 'max-w-6xl',
 };
 
 export default function Page({ width = 'wide', children }: PageProps) {

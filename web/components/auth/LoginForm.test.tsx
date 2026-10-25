@@ -54,7 +54,21 @@ describe('LoginForm', () => {
       'sam@hotel.com',
     );
     expect(button).toBeDisabled();
-    await userEvent.type(screen.getByLabelText('Password'), 'x');
+    await userEvent.type(screen.getByLabelText('Password'), 'at-least-8');
+    expect(button).toBeEnabled();
+  });
+
+  it('keeps the submit button disabled while the password is under 8 characters', async () => {
+    render(<LoginForm />);
+    const button = screen.getByRole('button', { name: 'Log in' });
+
+    await userEvent.type(
+      screen.getByLabelText('Email address'),
+      'sam@hotel.com',
+    );
+    await userEvent.type(screen.getByLabelText('Password'), '1234567');
+    expect(button).toBeDisabled();
+    await userEvent.type(screen.getByLabelText('Password'), '8');
     expect(button).toBeEnabled();
   });
 

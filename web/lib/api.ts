@@ -1,4 +1,14 @@
-import type { ApiErrorBody, LoginInput, SignupInput, Staff } from './types';
+import { addDays } from 'date-fns';
+import { toDateString } from './dates';
+import type {
+  ApiErrorBody,
+  Availability,
+  BookingConfirmation,
+  CreateBookingInput,
+  LoginInput,
+  SignupInput,
+  Staff,
+} from './types';
 
 export const GENERIC_ERROR_MESSAGE = 'Something went wrong. Please try again.';
 
@@ -12,6 +22,12 @@ export class ApiError extends Error {
     this.status = status;
     this.messages = messages;
   }
+}
+
+export function toApiError(caught: unknown): ApiError {
+  return caught instanceof ApiError
+    ? caught
+    : new ApiError(0, [GENERIC_ERROR_MESSAGE]);
 }
 
 async function readErrorMessages(response: Response): Promise<string[]> {
@@ -49,6 +65,22 @@ export function signup(input: SignupInput): Promise<Staff> {
 
 export function login(input: LoginInput): Promise<Staff> {
   return request<Staff>('/api/auth/login', {
+    method: 'POST',
+    body: JSON.stringify(input),
+  });
+}
+
+export function getAvailability(): Promise<Availability> {
+  return Promise.resolve({
+    firstBookableDate: toDateString(addDays(new Date(), 1)),
+    bookedNights: [],
+  });
+}
+
+export function createBooking(
+  input: CreateBookingInput,
+): Promise<BookingConfirmation> {
+  return request<BookingConfirmation>('/api/bookings', {
     method: 'POST',
     body: JSON.stringify(input),
   });

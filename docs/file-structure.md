@@ -31,13 +31,16 @@ web/
 │           └── page.tsx
 ├── components/
 │   ├── booking/
+│   │   ├── BookingSection.tsx
+│   │   ├── BookingSection.test.tsx
 │   │   ├── AvailabilityCalendar.tsx
 │   │   ├── AvailabilityCalendar.test.tsx
-│   │   ├── BookingModal.tsx
-│   │   ├── BookingModal.test.tsx
 │   │   ├── BookingForm.tsx
 │   │   ├── BookingForm.test.tsx
-│   │   └── BookingConfirmation.tsx
+│   │   ├── BookingModal.tsx
+│   │   ├── BookingModal.test.tsx
+│   │   ├── BookingConfirmation.tsx
+│   │   └── BookingConfirmation.test.tsx
 │   ├── auth/
 │   │   ├── SignupForm.tsx
 │   │   ├── SignupForm.test.tsx
@@ -50,19 +53,32 @@ web/
 │   │   ├── CancelBookingModal.tsx
 │   │   └── CancelBookingModal.test.tsx
 │   └── shared/
+│       ├── Actions.tsx
+│       ├── Actions.test.tsx
 │       ├── Button.tsx
 │       ├── Button.test.tsx
 │       ├── Card.tsx
 │       ├── Card.test.tsx
 │       ├── icons.tsx
 │       ├── icons.test.tsx
+│       ├── PhoneInput.tsx
+│       ├── PhoneInput.test.tsx
 │       ├── PasswordInput.tsx
 │       ├── PasswordInput.test.tsx
 │       ├── TextLink.tsx
 │       ├── TextLink.test.tsx
+│       ├── LoadingMessage.tsx
+│       ├── LoadingMessage.test.tsx
 │       ├── Modal.tsx
+│       ├── Modal.test.tsx
+│       ├── SectionHeading.tsx
+│       ├── SectionHeading.test.tsx
+│       ├── SiteHeader.tsx
+│       ├── SiteHeader.test.tsx
 │       ├── TextInput.tsx
 │       ├── TextInput.test.tsx
+│       ├── EmailInput.tsx
+│       ├── EmailInput.test.tsx
 │       ├── ErrorMessage.tsx
 │       ├── ErrorMessage.test.tsx
 │       ├── Form.tsx
@@ -76,6 +92,12 @@ web/
 ├── hooks/
 │   ├── useApiMutation.ts
 │   ├── useApiMutation.test.ts
+│   ├── useApiQuery.ts
+│   ├── useApiQuery.test.ts
+│   ├── useAvailability.ts
+│   ├── useAvailability.test.ts
+│   ├── useBookings.ts
+│   ├── useBookings.test.ts
 │   ├── useSignup.ts
 │   ├── useSignup.test.ts
 │   ├── useLogin.ts
@@ -90,6 +112,8 @@ web/
 │   ├── types.ts
 │   ├── form-errors.ts
 │   ├── form-errors.test.ts
+│   ├── phone.ts
+│   ├── phone.test.ts
 │   ├── validation.ts
 │   ├── validation.test.ts
 │   ├── dates.ts
@@ -125,8 +149,8 @@ Tests (`*.test.tsx`, `*.test.ts`) sit next to the file they test and run with Je
 
 ### Page flow
 
-- `/` → pick dates → booking modal opens with the form → book → the same modal shows the booking number and dates → close → calendar shows the new dates blocked.
-- On a booking `409`, the modal shows "no longer available"; closing it reloads availability.
+- `/` → pick a check-in then a check-out on the calendar → the "Your stay" panel beside it shows the dates and the guest details form → book → a modal shows the booking number and dates → close → the form clears and the calendar reloads with the new dates blocked.
+- On a booking `409`, a modal shows "Dates no longer available" with the API message; closing it clears the dates (the guest details stay filled in) and reloads availability.
 - `/staff/bookings` → Cancel on a row → confirmation modal → confirm → row shows as cancelled. Closing the modal does nothing.
 - `/staff/signup` or `/staff/login` → success → `/staff/bookings`
 - `/staff/bookings` → `401` from the API → `/staff/login`
@@ -198,9 +222,9 @@ Unit tests (`*.spec.ts`) sit next to the file they test. End-to-end tests live i
 - Tailwind CSS v4 is set up in `app/globals.css`; no `tailwind.config.ts`.
 - No `app/api/` folder; all `/api/*` requests go through the rewrite to NestJS.
 - All data is fetched in client components with relative `/api/...` URLs.
-- The booking confirmation is shown in the booking modal.
+- The booking form is a side panel next to the calendar (stacked under it on small screens), not a modal. `BookingSection` holds the selected dates and the booking request. The confirmation and the "no longer available" message are shown in `BookingModal`.
 - Modals are React state on the page, not routes. `shared/Modal.tsx` is the base modal for `BookingModal` and `CancelBookingModal`.
-- A header link leads to the staff login page. No footer. No `/staff` index page.
+- `shared/SiteHeader.tsx` ("Hotel RSVP" and a "Staff log in" link) is on the guest page `/` only, not in `layout.tsx`; staff pages have no header. No footer. No `/staff` index page.
 - The log-out button is on the bookings page. No separate staff layout.
 - No `loading.tsx`, `error.tsx` or middleware.
 
