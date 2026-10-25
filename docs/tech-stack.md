@@ -21,7 +21,7 @@ Next.js forwards `/api/*` to NestJS with a rewrite in `next.config`.
 | Front end | Next.js (App Router), hosted on Vercel |
 | Styling | Tailwind CSS |
 | Calendar UI | react-day-picker |
-| Back end | NestJS, hosted on Vercel |
+| Back end | NestJS 11 (not 12, which switches to Vitest and oxlint), hosted on Vercel |
 | Validation | NestJS DTOs + class-validator + class-transformer |
 | Database | MongoDB Atlas (free tier) |
 | Data access | Mongoose via `@nestjs/mongoose` |
