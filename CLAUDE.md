@@ -13,10 +13,6 @@ Read the relevant doc before changing anything it covers. Update the doc in the 
 - [docs/api-contract.md](docs/api-contract.md): endpoints, requests, responses, errors, login cookie.
 - [docs/file-structure.md](docs/file-structure.md): folders, files, routes and conventions for both apps.
 
-## Conventions
-
-- Logic likely to be reused goes in a util function: `web/lib/` for the front end, `api/src/common/` for the back end. Each app keeps its own utils; no shared code between `web/` and `api/`.
-
 ## Commands
 
 Run inside `web/` or `api/`:
