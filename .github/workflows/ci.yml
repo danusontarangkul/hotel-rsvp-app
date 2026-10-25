@@ -13,7 +13,7 @@ jobs:
       web: ${{ steps.apps.outputs.web }}
       api: ${{ steps.apps.outputs.api }}
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
       - id: apps
         run: |
           echo "web=$([ -f web/package-lock.json ] && echo true || echo false)" >> "$GITHUB_OUTPUT"
@@ -27,8 +27,8 @@ jobs:
       run:
         working-directory: web
     steps:
-      - uses: actions/checkout@v4
-      - uses: actions/setup-node@v4
+      - uses: actions/checkout@v7
+      - uses: actions/setup-node@v7
         with:
           node-version: 22
           cache: npm
@@ -48,13 +48,13 @@ jobs:
       run:
         working-directory: api
     steps:
-      - uses: actions/checkout@v4
-      - uses: actions/setup-node@v4
+      - uses: actions/checkout@v7
+      - uses: actions/setup-node@v7
         with:
           node-version: 22
           cache: npm
           cache-dependency-path: api/package-lock.json
-      - uses: actions/cache@v4
+      - uses: actions/cache@v6
         with:
           path: ~/.cache/mongodb-binaries
           key: mongodb-binaries-${{ hashFiles('api/package-lock.json') }}
