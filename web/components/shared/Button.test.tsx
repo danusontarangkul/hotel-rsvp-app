@@ -49,4 +49,20 @@ describe('Button', () => {
 
     expect(screen.getByRole('button', { name: 'Save' })).toBeDisabled();
   });
+
+  it.each(['secondary', 'danger', 'danger-text', 'ghost', 'icon'] as const)(
+    'works as a %s button',
+    async (variant) => {
+      const onClick = jest.fn();
+      render(
+        <Button variant={variant} onClick={onClick}>
+          Go
+        </Button>,
+      );
+
+      await userEvent.click(screen.getByRole('button', { name: 'Go' }));
+
+      expect(onClick).toHaveBeenCalledTimes(1);
+    },
+  );
 });

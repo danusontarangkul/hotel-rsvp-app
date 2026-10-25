@@ -20,6 +20,18 @@ export function formatDisplayDate(value: string): string {
   return format(parseISO(value), 'd MMM yyyy');
 }
 
+export function formatDateRange(checkIn: string, checkOut: string): string {
+  const start = parseISO(checkIn);
+  const end = parseISO(checkOut);
+  if (format(start, 'yyyy-MM') === format(end, 'yyyy-MM')) {
+    return `${format(start, 'd')}–${format(end, 'd MMMM yyyy')}`;
+  }
+  if (format(start, 'yyyy') === format(end, 'yyyy')) {
+    return `${format(start, 'd MMMM')} – ${format(end, 'd MMMM yyyy')}`;
+  }
+  return `${format(start, 'd MMMM yyyy')} – ${format(end, 'd MMMM yyyy')}`;
+}
+
 export function nightsBetween(checkIn: string, checkOut: string): string[] {
   const nights: string[] = [];
   for (

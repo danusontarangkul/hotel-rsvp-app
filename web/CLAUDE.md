@@ -32,6 +32,7 @@ Link to a frame: `https://www.figma.com/design/y8tAJJMZDW2c5K0sspUj0D/Untitled?n
 - The style guide is the `@theme` block in `app/globals.css`. Every color is a `--color-*` token there, named by role (e.g. `--color-surface`, `--color-border`, `--color-error`), with values taken from Figma.
 - Reuse a token through its Tailwind class (`bg-surface`, `border-border`, `text-error`). No hex, rgb or arbitrary values in components (`bg-[#f5f3ee]`), and no inline `style` colors.
 - If a color you need doesn't exist, add it to `@theme` with a role name and its Figma value, then use the class. Don't add a second token with the same value.
+- There is one red, `--color-error`. Use it for error text and for destructive actions (the `danger` and `danger-text` buttons, e.g. Cancel booking). Don't add another red.
 
 ## Typography
 
@@ -69,11 +70,12 @@ Link to a frame: `https://www.figma.com/design/y8tAJJMZDW2c5K0sspUj0D/Untitled?n
 - Any other loading indicator (e.g. a page's loading message) uses `components/shared/Spinner.tsx` too.
 - A form's submit button is disabled until all required fields are filled and valid: text fields pass `isFilled`, emails pass `isValidEmail` and passwords pass `isValidPassword` (at least `MIN_PASSWORD_LENGTH` characters), both from `lib/validation.ts`.
 - Every button has a visible focus style.
+- Every button has the same hover effect: a slight opacity drop (`transition-opacity enabled:hover:opacity-80`), never on disabled buttons. `Button` sets it; calendar buttons set it too. Don't add other hover effects to buttons.
 - Enabled buttons show the pointer cursor and disabled ones show `not-allowed` (`cursor-pointer disabled:cursor-not-allowed`). Tailwind v4 doesn't do this by default, so `Button` sets it; anything else clickable that isn't `Button` (e.g. the calendar's day cells and month arrows) sets it too.
 
 ## Loading
 
-- A page or section that fetches data shows a loading message with `components/shared/LoadingMessage.tsx` until the data arrives. If the request fails, show the error with a "Try again" button that calls `refetch`.
+- A table that fetches data shows a skeleton of itself until the data arrives: `components/shared/TableSkeleton.tsx` with the same columns, so nothing shifts when the rows load. Other sections that fetch data show `components/shared/LoadingMessage.tsx`. If loading fails, show `components/shared/LoadError.tsx` with the error's `messages` and `onRetry={refetch}` (the error plus a "Try again" button). Don't build this by hand.
 - Nothing shows stale data after a successful change; call the query hook's `refetch` or update state.
 
 ## Errors
@@ -83,13 +85,13 @@ Link to a frame: `https://www.figma.com/design/y8tAJJMZDW2c5K0sspUj0D/Untitled?n
 - Field errors show under the field.
 - Forms turn a hook's `error` into field and form errors with `toFormErrors(error, FIELDS, { status: field })` from `lib/form-errors.ts`. Don't write per-form error mapping.
 - A failed request leaves the form filled in.
-- A `401` redirects to `/staff/login`.
+- A `401` on a staff page redirects to `/staff/login` through `useRedirectOnUnauthorized`.
 
 ## Responsive layout
 
 - Build mobile first: unprefixed Tailwind classes are the phone layout, and `sm:` and up add the wider layout. No `max-*:` variants.
 - On small screens, everything stacks vertically: anything side by side on desktop (fields, buttons, calendar and form, table columns) is `flex-col` by default and becomes a row only at `sm:` or wider (e.g. `flex flex-col gap-2 sm:flex-row`).
-- Tables become stacked cards on small screens, one booking per card with each value under its label.
+- Tables become stacked cards on small screens, one row per card with each value next to its label. Build every table with `Table`, `TableRow` and `TableCell` from `components/shared/Table.tsx`, which do this; give each `TableCell` the same `label` as its column. No raw `<table>`.
 - Modals and buttons in a stacked layout are full width on small screens.
 - Use Tailwind's breakpoints only. No `@media` rules in CSS files, no custom breakpoint values, no JavaScript screen-size checks.
 - Nothing scrolls sideways at 320px wide.
@@ -103,7 +105,7 @@ Link to a frame: `https://www.figma.com/design/y8tAJJMZDW2c5K0sspUj0D/Untitled?n
 
 ## Empty states
 
-- A list with no items shows a message (e.g. "No bookings").
+- A list with no items shows a message with `components/shared/EmptyState.tsx` (e.g. "No bookings").
 
 ## Forms
 
@@ -132,4 +134,5 @@ Link to a frame: `https://www.figma.com/design/y8tAJJMZDW2c5K0sspUj0D/Untitled?n
 
 - Use `components/shared/Modal.tsx` as the base. It renders the title, a close (×) button and the `actions` row (the same `Actions` row as `Form`).
 - Every modal has a primary action (e.g. Book, Cancel booking) and a secondary action (e.g. Close, Keep booking).
+- Every destructive action (anything that cancels, deletes or can't be undone, e.g. Cancel booking) asks for confirmation in a modal first. The modal names exactly what will be affected, its confirm button uses the `danger` variant, and its other button keeps things as they are (e.g. Keep booking). The action only runs after the confirm button is clicked.
 - Close with a close button, Escape or a click outside, except while a request runs.

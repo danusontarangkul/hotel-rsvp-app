@@ -3,6 +3,7 @@ import {
   canCheckOut,
   canSelectDate,
   EMPTY_SELECTION,
+  formatDateRange,
   formatDisplayDate,
   isBooked,
   isUnavailable,
@@ -166,5 +167,25 @@ describe('canSelectDate', () => {
     const selection = { checkIn: '2026-11-01', checkOut: null };
 
     expect(canSelectDate(selection, '2026-11-03', availability)).toBe(true);
+  });
+});
+
+describe('formatDateRange', () => {
+  it('shares the month and year when both dates are in the same month', () => {
+    expect(formatDateRange('2026-11-08', '2026-11-11')).toBe(
+      '8–11 November 2026',
+    );
+  });
+
+  it('shows both months when the stay crosses a month', () => {
+    expect(formatDateRange('2026-10-30', '2026-11-02')).toBe(
+      '30 October – 2 November 2026',
+    );
+  });
+
+  it('shows both years when the stay crosses a year', () => {
+    expect(formatDateRange('2026-12-30', '2027-01-02')).toBe(
+      '30 December 2026 – 2 January 2027',
+    );
   });
 });
