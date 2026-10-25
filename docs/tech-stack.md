@@ -79,7 +79,7 @@ Next.js forwards `/api/*` to NestJS with a rewrite in `next.config`.
 |---|---|---|
 | api | `MONGODB_URI` | Atlas connection string |
 | api | `JWT_SECRET` | Signs login tokens |
-| api | `PORT` | Set by Render or Railway |
+| api | `PORT` | Local port only (e.g. `3001`); not used on Vercel |
 | web | `API_URL` | Target of the `/api/*` rewrite (e.g. `http://localhost:3001`) |
 
 ## CI and deployment
@@ -94,12 +94,12 @@ GitHub Actions (`.github/workflows/ci.yml`) runs on every push to any branch. `w
 6. End-to-end test (`api/` only, mongodb-memory-server binary cached).
 7. Build.
 
-Vercel deploys `web/` (root directory `web`) and Render or Railway deploys `api/` (root directory `api`) from GitHub.
+Vercel deploys both apps from GitHub as two projects: `web/` (root directory `web`) and `api/` (root directory `api`).
 
 ## Packages
 
 **Both:** TypeScript, ESLint, Prettier, date-fns, Jest
 
-**web/:** Next.js, Tailwind CSS, react-day-picker, React Testing Library
+**web/:** Next.js, Tailwind CSS, react-day-picker, React Testing Library, `@testing-library/user-event`
 
 **api/:** NestJS, class-validator, class-transformer, `@nestjs/config`, `@nestjs/mongoose`, Mongoose, `@nestjs/jwt`, bcrypt, cookie-parser, `@nestjs/testing`, Supertest, mongodb-memory-server
