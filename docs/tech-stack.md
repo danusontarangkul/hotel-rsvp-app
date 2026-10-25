@@ -73,7 +73,7 @@ Next.js forwards `/api/*` to NestJS with a rewrite in `next.config`.
 
 ## Environment variables
 
-`.env` files are not committed. Each app commits a `.env.example` with names only.
+`.env` files are not committed. Each app reads its variables from its own `.env` locally and from the Vercel project settings in production.
 
 | App | Variable | Purpose |
 |---|---|---|
