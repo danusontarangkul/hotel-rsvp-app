@@ -3,13 +3,13 @@
 import { useState, type SubmitEvent } from 'react';
 import { useRouter } from 'next/navigation';
 import Button from '@/components/shared/Button';
+import EmailInput from '@/components/shared/EmailInput';
 import Form from '@/components/shared/Form';
 import PasswordInput from '@/components/shared/PasswordInput';
-import TextInput from '@/components/shared/TextInput';
 import { ArrowRightIcon } from '@/components/shared/icons';
 import { useLogin } from '@/hooks/useLogin';
 import { toFormErrors } from '@/lib/form-errors';
-import { isFilled, isValidEmail } from '@/lib/validation';
+import { isValidEmail, isValidPassword } from '@/lib/validation';
 
 const FIELDS = ['email', 'password'] as const;
 
@@ -19,7 +19,7 @@ export default function LoginForm() {
   const [email, setEmail] = useState<string>('');
   const [password, setPassword] = useState<string>('');
 
-  const canSubmit = isValidEmail(email) && isFilled(password);
+  const canSubmit = isValidEmail(email) && isValidPassword(password);
   const errors = toFormErrors(error, FIELDS);
 
   async function handleSubmit(event: SubmitEvent<HTMLFormElement>) {
@@ -45,11 +45,8 @@ export default function LoginForm() {
         </Button>
       }
     >
-      <TextInput
-        label="Email address"
+      <EmailInput
         name="email"
-        type="email"
-        autoComplete="email"
         placeholder="you@briarhouse.co"
         required
         value={email}

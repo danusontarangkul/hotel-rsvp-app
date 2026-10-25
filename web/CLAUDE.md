@@ -53,7 +53,8 @@ Link to a frame: `https://www.figma.com/design/y8tAJJMZDW2c5K0sspUj0D/Untitled?n
 ## Hooks
 
 - Every API call goes through a hook in `hooks/`, one per call, named after it (`useSignup`, `useLogin`, `useCreateBooking`, `useCancelBooking`). Components never call `lib/api.ts` directly.
-- Hooks for requests that change data (POST) wrap `useApiMutation`, which owns `loading`, `error` (an `ApiError` or `null`) and `data`. Don't write loading or error state for a request by hand.
+- Hooks for requests that change data (POST) wrap `useApiMutation`, which owns `loading`, `error` (an `ApiError` or `null`), `data` and `reset()` (clears all three, e.g. when a result modal closes). Don't write loading or error state for a request by hand.
+- Hooks for requests that read data (GET) wrap `useApiQuery`, which loads on mount and owns `loading`, `error`, `data` and `refetch`.
 - `run(input)` resolves with the response, or `null` on failure; it never throws. Check the result before navigating.
 - Hooks hold request state only. Mapping errors to fields, navigation and copy stay in the component.
 
@@ -63,16 +64,17 @@ Link to a frame: `https://www.figma.com/design/y8tAJJMZDW2c5K0sspUj0D/Untitled?n
 
 ## Buttons
 
-- Use `components/shared/Button.tsx` for every button.
+- Use `components/shared/Button.tsx` for every button. The only exception is the calendar's day cells and month arrows, which `react-day-picker` renders (`AvailabilityCalendar` styles them).
 - A button that sends a request passes `loading` while the request runs. A loading button shows only the shared `Spinner`, with no loading text (no "Booking...", "Signing up..."), and is always disabled, whatever `disabled` says. Don't build your own loading button or spinner.
 - Any other loading indicator (e.g. a page's loading message) uses `components/shared/Spinner.tsx` too.
 - A form's submit button is disabled until all required fields are filled and valid: text fields pass `isFilled`, emails pass `isValidEmail` and passwords pass `isValidPassword` (at least `MIN_PASSWORD_LENGTH` characters), both from `lib/validation.ts`.
 - Every button has a visible focus style.
+- Enabled buttons show the pointer cursor and disabled ones show `not-allowed` (`cursor-pointer disabled:cursor-not-allowed`). Tailwind v4 doesn't do this by default, so `Button` sets it; anything else clickable that isn't `Button` (e.g. the calendar's day cells and month arrows) sets it too.
 
 ## Loading
 
-- A page or section that fetches data shows a loading message until the data arrives.
-- Nothing shows stale data after a successful change; refetch or update state.
+- A page or section that fetches data shows a loading message with `components/shared/LoadingMessage.tsx` until the data arrives. If the request fails, show the error with a "Try again" button that calls `refetch`.
+- Nothing shows stale data after a successful change; call the query hook's `refetch` or update state.
 
 ## Errors
 
@@ -109,6 +111,8 @@ Link to a frame: `https://www.figma.com/design/y8tAJJMZDW2c5K0sspUj0D/Untitled?n
 - Inputs use `required`, `type="email"` and `minLength` where they apply. `TextInput` marks required fields with ` *` after the label.
 - `Form` sets `noValidate`: the browser's own validation bubbles never show. Field errors use the Figma copy under the field, shown once the user leaves the field (e.g. "Password must be at least 8 characters.").
 - Password fields use `PasswordInput`, which has the show/hide button.
+- Email fields use `EmailInput` (label "Email address", `type="email"`, `autoComplete="email"`).
+- Phone fields use `PhoneInput`. It shows `(123) 456-7890` as the user types but its `value` and `onChange` are digits only; send and store digits, and format with `formatPhone` from `lib/phone.ts` wherever a number is shown.
 
 ## Tests
 
@@ -126,6 +130,6 @@ Link to a frame: `https://www.figma.com/design/y8tAJJMZDW2c5K0sspUj0D/Untitled?n
 
 ## Modals
 
-- Use `components/shared/Modal.tsx` as the base.
+- Use `components/shared/Modal.tsx` as the base. It renders the title, a close (×) button and the `actions` row (the same `Actions` row as `Form`).
 - Every modal has a primary action (e.g. Book, Cancel booking) and a secondary action (e.g. Close, Keep booking).
 - Close with a close button, Escape or a click outside, except while a request runs.

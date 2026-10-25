@@ -1,4 +1,5 @@
 import type { ReactNode, SubmitEventHandler } from 'react';
+import Actions from './Actions';
 import ErrorMessage from './ErrorMessage';
 
 type FormProps = {
@@ -17,9 +18,7 @@ export default function Form({
   return (
     <form onSubmit={onSubmit} noValidate className="flex flex-col gap-1">
       {children}
-      <div className="flex flex-col gap-2 sm:flex-row sm:justify-end *:flex-1">
-        {actions}
-      </div>
+      <Actions>{actions}</Actions>
       <ErrorMessage messages={errors} />
     </form>
   );

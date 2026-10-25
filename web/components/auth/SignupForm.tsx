@@ -3,6 +3,7 @@
 import { useState, type SubmitEvent } from 'react';
 import { useRouter } from 'next/navigation';
 import Button from '@/components/shared/Button';
+import EmailInput from '@/components/shared/EmailInput';
 import Form from '@/components/shared/Form';
 import PasswordInput from '@/components/shared/PasswordInput';
 import TextInput from '@/components/shared/TextInput';
@@ -69,11 +70,8 @@ export default function SignupForm() {
         onChange={(event) => setName(event.target.value)}
         errors={errors.fields.name}
       />
-      <TextInput
-        label="Email address"
+      <EmailInput
         name="email"
-        type="email"
-        autoComplete="email"
         placeholder="you@briarhouse.co"
         required
         value={email}

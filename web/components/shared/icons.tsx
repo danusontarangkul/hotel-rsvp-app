@@ -23,6 +23,10 @@ export function ArrowRightIcon() {
   return <Icon path="M5 12h14M13 6l6 6-6 6" />;
 }
 
+export function CloseIcon() {
+  return <Icon path="M6 6l12 12M18 6L6 18" />;
+}
+
 export function EyeIcon() {
   return (
     <Icon path="M2 12s3.5-7 10-7 10 7 10 7-3.5 7-10 7S2 12 2 12zM12 15a3 3 0 1 0 0-6 3 3 0 0 0 0 6z" />

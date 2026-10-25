@@ -15,6 +15,28 @@ export type LoginInput = {
   password: string;
 };
 
+export type Availability = {
+  firstBookableDate: string;
+  bookedNights: string[];
+};
+
+export type GuestDetails = {
+  guestName: string;
+  guestEmail: string;
+  guestPhone: string;
+};
+
+export type CreateBookingInput = GuestDetails & {
+  checkIn: string;
+  checkOut: string;
+};
+
+export type BookingConfirmation = {
+  bookingNumber: string;
+  checkIn: string;
+  checkOut: string;
+};
+
 export type ApiErrorBody = {
   statusCode: number;
   message: string | string[];

@@ -1,11 +1,12 @@
 import { useCallback, useState } from 'react';
-import { ApiError, GENERIC_ERROR_MESSAGE } from '@/lib/api';
+import { toApiError, type ApiError } from '@/lib/api';
 
 export type ApiMutation<Input, Output> = {
   run: (input: Input) => Promise<Output | null>;
   loading: boolean;
   error: ApiError | null;
   data: Output | null;
+  reset: () => void;
 };
 
 export function useApiMutation<Input, Output>(
@@ -24,11 +25,7 @@ export function useApiMutation<Input, Output>(
         setData(result);
         return result;
       } catch (caught) {
-        setError(
-          caught instanceof ApiError
-            ? caught
-            : new ApiError(0, [GENERIC_ERROR_MESSAGE]),
-        );
+        setError(toApiError(caught));
         return null;
       } finally {
         setLoading(false);
@@ -37,5 +34,11 @@ export function useApiMutation<Input, Output>(
     [request],
   );
 
-  return { run, loading, error, data };
+  const reset = useCallback(() => {
+    setLoading(false);
+    setError(null);
+    setData(null);
+  }, []);
+
+  return { run, loading, error, data, reset };
 }

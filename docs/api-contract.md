@@ -52,7 +52,7 @@ User Story 2.
 {
   "guestName": "Ana Lopez",
   "guestEmail": "ana@example.com",
-  "guestPhone": "555-0100",
+  "guestPhone": "5550100123",
   "checkIn": "2026-10-27",
   "checkOut": "2026-10-29"
 }
@@ -141,7 +141,7 @@ User Story 5. All bookings, active and cancelled, sorted by `checkIn` (earliest 
     "bookingNumber": "K7Q2MX",
     "guestName": "Ana Lopez",
     "guestEmail": "ana@example.com",
-    "guestPhone": "555-0100",
+    "guestPhone": "5550100123",
     "checkIn": "2026-10-27",
     "checkOut": "2026-10-29",
     "status": "active",
@@ -187,7 +187,7 @@ The "are you sure?" confirmation is front end only.
 - No API versioning.
 - "Today" and "tomorrow" use the hotel's time zone.
 - No maximum stay length and no limit on how far ahead a guest can book.
-- Phone is free text; only "not blank" is checked.
+- Phone is stored as sent; the API only checks "not blank". The web app sends 10 digits with no formatting (e.g. `5550100123`) and formats them as `(555) 010-0123` for display.
 - No pagination on the bookings list.
 - Staff cannot un-cancel a booking.
 - No rate limiting.
