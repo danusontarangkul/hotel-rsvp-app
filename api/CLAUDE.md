@@ -2,11 +2,14 @@
 
 Back end conventions.
 
+## Utils
+
+- Logic likely to be reused goes in a util function in `src/common/`, with a spec next to it.
+
 ## Controllers and services
 
 - Controllers only take the DTO and call the service. No logic or database calls in controllers.
 - Booking rules and database access live in services.
-- Logic likely to be reused goes in a util function in `src/common/`, with a spec next to it.
 - Throw NestJS built-in exceptions (`BadRequestException`, `ConflictException`, `NotFoundException`, `UnauthorizedException`). Never build error responses by hand.
 - Use `@HttpCode` where the default is wrong: `200` for login and cancel, `204` for logout.
 
