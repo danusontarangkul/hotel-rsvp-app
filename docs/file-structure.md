@@ -6,7 +6,9 @@ One repo with the Next.js front end (`web/`) and the NestJS back end (`api/`):
 hotel-app/
 ├── web/
 ├── api/
-├── .github/workflows/
+├── .github/
+│   └── workflows/
+│       └── ci.yml
 └── .prettierrc
 ```
 
