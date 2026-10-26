@@ -210,6 +210,7 @@ api/
 │   │   ├── auth.service.ts
 │   │   ├── auth.service.spec.ts
 │   │   ├── auth.guard.ts
+│   │   ├── auth.guard.spec.ts
 │   │   └── dto/
 │   │       ├── signup.dto.ts
 │   │       └── login.dto.ts
@@ -231,6 +232,8 @@ api/
 │   │   ├── night.schema.ts
 │   │   ├── booking-number.ts
 │   │   ├── booking-number.spec.ts
+│   │   ├── booking-response.ts
+│   │   ├── booking-response.spec.ts
 │   │   └── dto/
 │   │       └── create-booking.dto.ts
 │   └── common/
@@ -247,6 +250,7 @@ api/
 ├── test/
 │   ├── app.e2e.ts
 │   ├── auth.e2e-spec.ts
+│   ├── availability.e2e-spec.ts
 │   ├── bookings.e2e-spec.ts
 │   ├── global-setup.ts
 │   ├── global-teardown.ts
@@ -290,7 +294,8 @@ Unit tests (`*.spec.ts`) sit next to the file they test. End-to-end tests live i
 - `app.setup.ts` (`configureApp`) sets the global `/api` prefix, `cookie-parser` and the global `ValidationPipe` (`whitelist`, `forbidNonWhitelisted`, `transform`, `stopAtFirstError`). `main.ts` and the e2e tests both call it, so tests run the same app.
 - E2e tests start one `MongoMemoryReplSet` in `test/global-setup.ts`, which sets `MONGODB_URI` and `JWT_SECRET` before the app loads (so a local `.env` is never used), and build the app with `createTestApp()` from `test/app.e2e.ts`.
 - `app.module.ts` loads `@nestjs/config` and connects Mongoose with `MONGODB_URI`.
-- `auth.guard.ts` reads the `token` cookie and guards the two staff-only booking endpoints.
+- `auth.guard.ts` (`AuthGuard`) reads the `token` cookie, checks the JWT and returns `401` if it is missing or not valid. Staff-only routes add `@UseGuards(AuthGuard)`. `AuthModule` exports `JwtModule`, and `BookingsModule` imports `AuthModule` so the guard can use it.
+- `booking-response.ts` (`toBookingResponse`) turns a saved booking into the API shape. Every endpoint that returns a booking uses it.
 - `staff/` has no controller; only `auth/` uses it.
 - Booking rules live in `bookings.service.ts`.
 - "Now" comes from the injected `CLOCK` provider (`common/clock.ts`), never `new Date()` in a service. Tests replace it with a fixed time: unit tests provide their own `CLOCK`, and e2e tests call `createTestApp({ now })`.

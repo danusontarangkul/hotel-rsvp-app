@@ -156,6 +156,83 @@ describe('BookingsService', () => {
     });
   });
 
+  describe('findAll', () => {
+    it('returns no bookings when there are none', async () => {
+      await expect(service.findAll()).resolves.toEqual([]);
+    });
+
+    it('returns each booking in the API shape', async () => {
+      const { bookingNumber } = await service.create(stay);
+      const saved = await savedBooking(bookingNumber);
+
+      await expect(service.findAll()).resolves.toEqual([
+        {
+          id: saved._id.toString(),
+          bookingNumber,
+          guestName: 'Maya Chen',
+          guestEmail: 'maya.chen@example.com',
+          guestPhone: '4155550349',
+          checkIn: '2026-11-08',
+          checkOut: '2026-11-11',
+          status: 'active',
+          createdAt: saved.createdAt.toISOString(),
+          cancelledAt: null,
+        },
+      ]);
+    });
+
+    it('sorts by check-in, then by when the booking was made', async () => {
+      await bookingModel.collection.insertMany([
+        {
+          ...stay,
+          bookingNumber: 'LATER2',
+          checkIn: '2026-11-20',
+          checkOut: '2026-11-22',
+          status: 'active',
+          cancelledAt: null,
+          createdAt: new Date('2026-10-20T10:00:00.000Z'),
+        },
+        {
+          ...stay,
+          bookingNumber: 'SECOND',
+          status: 'active',
+          cancelledAt: null,
+          createdAt: new Date('2026-10-22T10:00:00.000Z'),
+        },
+        {
+          ...stay,
+          bookingNumber: 'FIRST3',
+          status: 'cancelled',
+          cancelledAt: new Date('2026-10-21T10:00:00.000Z'),
+          createdAt: new Date('2026-10-21T09:00:00.000Z'),
+        },
+      ]);
+
+      const bookings = await service.findAll();
+
+      expect(bookings.map((booking) => booking.bookingNumber)).toEqual([
+        'FIRST3',
+        'SECOND',
+        'LATER2',
+      ]);
+    });
+
+    it('includes cancelled bookings with their cancelled time', async () => {
+      const { bookingNumber } = await service.create(stay);
+      await bookingModel.updateOne(
+        { bookingNumber },
+        {
+          status: 'cancelled',
+          cancelledAt: new Date('2026-10-25T20:00:00.000Z'),
+        },
+      );
+
+      await expect(service.findAll()).resolves.toMatchObject([
+        { status: 'cancelled', cancelledAt: '2026-10-25T20:00:00.000Z' },
+      ]);
+    });
+  });
+
   describe('create', () => {
     it('returns the booking number and dates', async () => {
       const result = await service.create(stay);

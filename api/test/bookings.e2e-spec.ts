@@ -158,3 +158,117 @@ describe('POST /api/bookings', () => {
     await book(validBooking).expect(201);
   });
 });
+
+describe('GET /api/bookings', () => {
+  let app: INestApplication<App>;
+  let clearDatabase: () => Promise<void>;
+
+  beforeAll(async () => {
+    ({ app, clearDatabase } = await createTestApp({
+      now: NOON_IN_LOS_ANGELES_ON_OCTOBER_25,
+    }));
+  });
+
+  afterEach(async () => {
+    await clearDatabase();
+  });
+
+  afterAll(async () => {
+    await app.close();
+  });
+
+  async function staffCookie(): Promise<string> {
+    const response = await request(app.getHttpServer())
+      .post('/api/auth/signup')
+      .send({ name: 'Sam Lee', email: 'sam@hotel.com', password: 'at-least-8' })
+      .expect(201);
+    const [cookie] = response.get('Set-Cookie') ?? [];
+    return cookie.split(';')[0];
+  }
+
+  function book(body: object) {
+    return request(app.getHttpServer())
+      .post('/api/bookings')
+      .send(body)
+      .expect(201);
+  }
+
+  function listBookings(cookie?: string) {
+    const call = request(app.getHttpServer()).get('/api/bookings');
+    return cookie ? call.set('Cookie', cookie) : call;
+  }
+
+  it('returns 200 with every booking for a logged-in staff member', async () => {
+    const cookie = await staffCookie();
+    const booked = await book(validBooking);
+
+    const response = await listBookings(cookie).expect(200);
+
+    expect(response.body).toEqual([
+      {
+        id: expect.stringMatching(/^[a-f0-9]{24}$/) as string,
+        bookingNumber: (booked.body as { bookingNumber: string }).bookingNumber,
+        guestName: 'Maya Chen',
+        guestEmail: 'maya.chen@example.com',
+        guestPhone: '4155550349',
+        checkIn: '2026-11-08',
+        checkOut: '2026-11-11',
+        status: 'active',
+        createdAt: expect.stringMatching(
+          /^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}\.\d{3}Z$/,
+        ) as string,
+        cancelledAt: null,
+      },
+    ]);
+  });
+
+  it('returns the bookings sorted by check-in', async () => {
+    const cookie = await staffCookie();
+    await book({
+      ...validBooking,
+      checkIn: '2026-11-20',
+      checkOut: '2026-11-22',
+    });
+    await book(validBooking);
+
+    const response = await listBookings(cookie).expect(200);
+
+    expect(
+      (response.body as { checkIn: string }[]).map(
+        (booking) => booking.checkIn,
+      ),
+    ).toEqual(['2026-11-08', '2026-11-20']);
+  });
+
+  it('returns an empty list when there are no bookings', async () => {
+    const cookie = await staffCookie();
+
+    const response = await listBookings(cookie).expect(200);
+
+    expect(response.body).toEqual([]);
+  });
+
+  it('returns 401 when not logged in', async () => {
+    await book(validBooking);
+
+    const response = await listBookings().expect(401);
+
+    expect((response.body as ErrorBody).statusCode).toBe(401);
+    expect(response.body).not.toHaveProperty('0');
+  });
+
+  it('returns 401 for a token cookie that is not valid', async () => {
+    await listBookings('token=not-a-real-token').expect(401);
+  });
+
+  it('returns 401 after logging out', async () => {
+    const cookie = await staffCookie();
+    const logout = await request(app.getHttpServer())
+      .post('/api/auth/logout')
+      .set('Cookie', cookie)
+      .expect(204);
+    const [clearedCookie] = logout.get('Set-Cookie') ?? [];
+
+    await listBookings(clearedCookie.split(';')[0]).expect(401);
+  });
+});

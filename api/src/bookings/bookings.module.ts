@@ -1,5 +1,6 @@
 import { Module } from '@nestjs/common';
 import { MongooseModule } from '@nestjs/mongoose';
+import { AuthModule } from '../auth/auth.module';
 import { CLOCK, systemClock } from '../common/clock';
 import { AvailabilityController } from './availability.controller';
 import { Booking, BookingSchema } from './booking.schema';
@@ -9,6 +10,7 @@ import { Night, NightSchema } from './night.schema';
 
 @Module({
   imports: [
+    AuthModule,
     MongooseModule.forFeature([
       { name: Booking.name, schema: BookingSchema },
       { name: Night.name, schema: NightSchema },

@@ -23,3 +23,16 @@ export type CreateBookingResponse = {
   checkIn: string;
   checkOut: string;
 };
+
+export type BookingResponse = {
+  id: string;
+  bookingNumber: string;
+  guestName: string;
+  guestEmail: string;
+  guestPhone: string;
+  checkIn: string;
+  checkOut: string;
+  status: BookingStatus;
+  createdAt: string;
+  cancelledAt: string | null;
+};

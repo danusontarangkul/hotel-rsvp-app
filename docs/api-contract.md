@@ -14,7 +14,7 @@ NestJS REST API. All paths start with `/api` (the Next.js rewrite forwards them 
 | GET | `/api/bookings` | Staff | User Story 5: View bookings |
 | POST | `/api/bookings/:id/cancel` | Staff | User Story 6: Cancel |
 
-"Staff" means a valid login cookie is required; without one the response is `401`.
+"Staff" means a valid login cookie is required. A missing, empty, tampered or expired `token` cookie returns `401` with `message` `Unauthorized`, before the endpoint does anything.
 
 ## Errors
 
@@ -162,6 +162,8 @@ User Story 5. All bookings, active and cancelled, sorted by `checkIn` (earliest 
 ```
 
 - `status` is `active` or `cancelled`.
+- `createdAt` and `cancelledAt` are ISO 8601 times in UTC. `cancelledAt` is `null` until the booking is cancelled.
+- Who cancelled a booking (`cancelledBy`) is stored but not returned.
 - No bookings returns `[]` (the page shows "No bookings").
 
 **Errors:** `401` if not logged in.
