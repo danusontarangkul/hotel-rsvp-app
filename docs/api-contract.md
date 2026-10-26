@@ -178,8 +178,12 @@ User Story 6. `:id` is the booking's `id` from the list. No request body. Marks 
 | Status | When |
 |---|---|
 | 401 | Not logged in. |
-| 404 | No booking with that id. |
-| 409 | Booking is already cancelled. |
+| 404 | No booking with that id, including an id that is not a valid id. `message` is exactly `Booking not found.` |
+| 409 | Booking is already cancelled. `message` is exactly `Booking is already cancelled.` |
+
+- `cancelledAt` is the time of the request. The booking also saves the logged-in staff member as `cancelledBy`, which is not returned.
+- The booking update and the deletion of its nights happen in one transaction, so the dates are free again the moment it succeeds. If two cancels for the same booking arrive at once, one gets `200` and the other `409`.
+- Any request body is ignored.
 
 The "are you sure?" confirmation is front end only.
 

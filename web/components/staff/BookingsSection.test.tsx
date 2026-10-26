@@ -116,7 +116,7 @@ describe('BookingsSection', () => {
   it('shows the error in the modal when cancelling fails', async () => {
     mockGetBookings.mockResolvedValue([activeBooking]);
     mockCancelBooking.mockRejectedValue(
-      new ApiError(409, ['Booking is already cancelled']),
+      new ApiError(409, ['Booking is already cancelled.']),
     );
     render(<BookingsSection />);
 
@@ -131,7 +131,7 @@ describe('BookingsSection', () => {
 
     expect(
       await within(screen.getByRole('dialog')).findByText(
-        'Booking is already cancelled',
+        'Booking is already cancelled.',
       ),
     ).toBeInTheDocument();
   });

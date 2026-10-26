@@ -272,3 +272,152 @@ describe('GET /api/bookings', () => {
     await listBookings(clearedCookie.split(';')[0]).expect(401);
   });
 });
+
+describe('POST /api/bookings/:id/cancel', () => {
+  let app: INestApplication<App>;
+  let clearDatabase: () => Promise<void>;
+
+  beforeAll(async () => {
+    ({ app, clearDatabase } = await createTestApp({
+      now: NOON_IN_LOS_ANGELES_ON_OCTOBER_25,
+    }));
+  });
+
+  afterEach(async () => {
+    await clearDatabase();
+  });
+
+  afterAll(async () => {
+    await app.close();
+  });
+
+  async function staffCookie(): Promise<string> {
+    const response = await request(app.getHttpServer())
+      .post('/api/auth/signup')
+      .send({ name: 'Sam Lee', email: 'sam@hotel.com', password: 'at-least-8' })
+      .expect(201);
+    const [cookie] = response.get('Set-Cookie') ?? [];
+    return cookie.split(';')[0];
+  }
+
+  async function bookedId(cookie: string): Promise<string> {
+    await request(app.getHttpServer())
+      .post('/api/bookings')
+      .send(validBooking)
+      .expect(201);
+    const list = await request(app.getHttpServer())
+      .get('/api/bookings')
+      .set('Cookie', cookie)
+      .expect(200);
+    return (list.body as { id: string }[])[0].id;
+  }
+
+  function cancel(id: string, cookie?: string) {
+    const call = request(app.getHttpServer()).post(
+      `/api/bookings/${id}/cancel`,
+    );
+    return cookie ? call.set('Cookie', cookie) : call;
+  }
+
+  it('returns 200 with the booking marked cancelled', async () => {
+    const cookie = await staffCookie();
+    const id = await bookedId(cookie);
+
+    const response = await cancel(id, cookie).expect(200);
+
+    expect(response.body).toEqual({
+      id,
+      bookingNumber: expect.stringMatching(/^[A-Z2-9]{6}$/) as string,
+      guestName: 'Maya Chen',
+      guestEmail: 'maya.chen@example.com',
+      guestPhone: '4155550349',
+      checkIn: '2026-11-08',
+      checkOut: '2026-11-11',
+      status: 'cancelled',
+      createdAt: expect.any(String) as string,
+      cancelledAt: '2026-10-25T19:00:00.000Z',
+    });
+  });
+
+  it('frees the nights so the dates show as available again', async () => {
+    const cookie = await staffCookie();
+    const id = await bookedId(cookie);
+
+    await cancel(id, cookie).expect(200);
+
+    const availability = await request(app.getHttpServer())
+      .get('/api/availability')
+      .expect(200);
+    expect(
+      (availability.body as { bookedNights: string[] }).bookedNights,
+    ).toEqual([]);
+  });
+
+  it('keeps the booking in the staff list as cancelled', async () => {
+    const cookie = await staffCookie();
+    const id = await bookedId(cookie);
+
+    await cancel(id, cookie).expect(200);
+
+    const list = await request(app.getHttpServer())
+      .get('/api/bookings')
+      .set('Cookie', cookie)
+      .expect(200);
+    expect(list.body).toMatchObject([{ id, status: 'cancelled' }]);
+  });
+
+  it('returns 409 when the booking is already cancelled', async () => {
+    const cookie = await staffCookie();
+    const id = await bookedId(cookie);
+    await cancel(id, cookie).expect(200);
+
+    const response = await cancel(id, cookie).expect(409);
+
+    expect((response.body as ErrorBody).message).toBe(
+      'Booking is already cancelled.',
+    );
+  });
+
+  it('returns 404 when no booking has that id', async () => {
+    const cookie = await staffCookie();
+
+    const response = await cancel('6718f1d3a1b2c3d4e5f60719', cookie).expect(
+      404,
+    );
+
+    expect((response.body as ErrorBody).message).toBe('Booking not found.');
+  });
+
+  it('returns 404 for an id that is not a valid id', async () => {
+    const cookie = await staffCookie();
+
+    await cancel('not-an-id', cookie).expect(404);
+  });
+
+  it('returns 401 and cancels nothing when not logged in', async () => {
+    const cookie = await staffCookie();
+    const id = await bookedId(cookie);
+
+    await cancel(id).expect(401);
+
+    const list = await request(app.getHttpServer())
+      .get('/api/bookings')
+      .set('Cookie', cookie)
+      .expect(200);
+    expect(list.body).toMatchObject([{ id, status: 'active' }]);
+  });
+
+  it('returns 401 for a token cookie that is not valid', async () => {
+    const cookie = await staffCookie();
+    const id = await bookedId(cookie);
+
+    await cancel(id, 'token=not-a-real-token').expect(401);
+  });
+
+  it('ignores a request body', async () => {
+    const cookie = await staffCookie();
+    const id = await bookedId(cookie);
+
+    await cancel(id, cookie).send({ status: 'active' }).expect(200);
+  });
+});

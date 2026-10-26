@@ -4,9 +4,17 @@ import {
   Inject,
   Injectable,
   InternalServerErrorException,
+  NotFoundException,
+  type HttpException,
 } from '@nestjs/common';
 import { InjectConnection, InjectModel } from '@nestjs/mongoose';
-import type { ClientSession, Connection, Model } from 'mongoose';
+import {
+  isObjectIdOrHexString,
+  Types,
+  type ClientSession,
+  type Connection,
+  type Model,
+} from 'mongoose';
 import { CLOCK, type Clock } from '../common/clock';
 import { HOTEL_TIME_ZONE } from '../common/constants';
 import { addDays, nightsBetween, todayIn } from '../common/dates';
@@ -16,6 +24,8 @@ import { generateBookingNumber } from './booking-number';
 import { toBookingResponse } from './booking-response';
 import { Booking } from './booking.schema';
 import {
+  BOOKING_ALREADY_CANCELLED,
+  BOOKING_NOT_FOUND,
   CHECK_IN_TOO_EARLY,
   CHECK_OUT_NOT_AFTER_CHECK_IN,
   DATES_TAKEN,
@@ -77,6 +87,58 @@ export class BookingsService {
     };
   }
 
+  async cancel(id: string, staffId: string): Promise<BookingResponse> {
+    if (!isObjectIdOrHexString(id)) {
+      throw new NotFoundException(BOOKING_NOT_FOUND);
+    }
+    const cancelled = await this.inTransaction(async (session) => {
+      const booking = await this.bookingModel
+        .findOneAndUpdate(
+          { _id: id, status: 'active' },
+          {
+            $set: {
+              status: 'cancelled',
+              cancelledAt: this.clock.now(),
+              cancelledBy: new Types.ObjectId(staffId),
+            },
+          },
+          { returnDocument: 'after', session },
+        )
+        .lean<BookingRecord>()
+        .exec();
+      if (!booking) {
+        throw await this.whyNotCancellable(id, session);
+      }
+      await this.nightModel.deleteMany({ bookingId: booking._id }, { session });
+      return booking;
+    });
+    return toBookingResponse(cancelled);
+  }
+
+  private async whyNotCancellable(
+    id: string,
+    session: ClientSession,
+  ): Promise<HttpException> {
+    const exists = await this.bookingModel
+      .exists({ _id: id })
+      .session(session)
+      .exec();
+    return exists
+      ? new ConflictException(BOOKING_ALREADY_CANCELLED)
+      : new NotFoundException(BOOKING_NOT_FOUND);
+  }
+
+  private async inTransaction<Result>(
+    work: (session: ClientSession) => Promise<Result>,
+  ): Promise<Result> {
+    const session = await this.connection.startSession();
+    try {
+      return await session.withTransaction(() => work(session));
+    } finally {
+      await session.endSession();
+    }
+  }
+
   private tomorrow(): string {
     return addDays(todayIn(HOTEL_TIME_ZONE, this.clock.now()), 1);
   }
@@ -114,16 +176,11 @@ export class BookingsService {
     booking: NewBooking,
     bookingNumber: string,
   ): Promise<BookingRecord> {
-    const session = await this.connection.startSession();
-    try {
-      return await session.withTransaction(async () => {
-        const saved = await this.insertBooking(booking, bookingNumber, session);
-        await this.insertNights(saved, session);
-        return saved;
-      });
-    } finally {
-      await session.endSession();
-    }
+    return this.inTransaction(async (session) => {
+      const saved = await this.insertBooking(booking, bookingNumber, session);
+      await this.insertNights(saved, session);
+      return saved;
+    });
   }
 
   private async insertBooking(

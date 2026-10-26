@@ -1,5 +1,6 @@
 import {
   ApiError,
+  GENERIC_ERROR_MESSAGE,
   cancelBooking,
   createBooking,
   getAvailability,
@@ -9,7 +10,6 @@ import {
   signup,
   toApiError,
 } from './api';
-import { listMockBookings, resetMockBookings } from './mock-bookings';
 
 const input = {
   name: 'Sam Lee',
@@ -25,7 +25,14 @@ function mockFetch(status: number, body: unknown) {
   });
 }
 
+let consoleError: jest.SpyInstance;
+
+beforeEach(() => {
+  consoleError = jest.spyOn(console, 'error').mockImplementation(() => {});
+});
+
 afterEach(() => {
+  jest.restoreAllMocks();
   jest.resetAllMocks();
 });
 
@@ -124,11 +131,11 @@ describe('getAvailability', () => {
     });
   });
 
-  it('throws an ApiError when the request fails', async () => {
+  it('throws the generic message instead of the server’s text when the request fails', async () => {
     mockFetch(500, { statusCode: 500, message: 'Internal server error' });
 
     await expect(getAvailability()).rejects.toEqual(
-      new ApiError(500, ['Internal server error']),
+      new ApiError(500, [GENERIC_ERROR_MESSAGE]),
     );
   });
 });
@@ -183,6 +190,17 @@ describe('toApiError', () => {
       new ApiError(0, ['Something went wrong. Please try again.']),
     );
   });
+
+  it('logs the original error to the console', () => {
+    const networkError = new TypeError('Failed to fetch');
+
+    toApiError(networkError);
+
+    expect(consoleError).toHaveBeenCalledWith(
+      'Request failed before a response arrived:',
+      networkError,
+    );
+  });
 });
 
 describe('logout', () => {
@@ -199,7 +217,9 @@ describe('logout', () => {
   it('throws an ApiError when the request fails', async () => {
     mockFetch(500, { statusCode: 500, message: 'Server down' });
 
-    await expect(logout()).rejects.toEqual(new ApiError(500, ['Server down']));
+    await expect(logout()).rejects.toEqual(
+      new ApiError(500, [GENERIC_ERROR_MESSAGE]),
+    );
   });
 });
 
@@ -228,43 +248,96 @@ describe('getBookings', () => {
     });
   });
 
-  it('throws a 401 ApiError when not logged in', async () => {
+  it('throws a 401 ApiError with the generic message when not logged in', async () => {
     mockFetch(401, { statusCode: 401, message: 'Unauthorized' });
 
     await expect(getBookings()).rejects.toEqual(
-      new ApiError(401, ['Unauthorized']),
+      new ApiError(401, [GENERIC_ERROR_MESSAGE]),
     );
   });
 });
 
 describe('cancelBooking', () => {
-  afterEach(() => {
-    resetMockBookings();
-  });
-
-  it('returns the cancelled booking', async () => {
-    const [first] = listMockBookings();
-
-    await expect(cancelBooking(first.id)).resolves.toMatchObject({
-      id: first.id,
+  it('cancels the booking through the API and returns it', async () => {
+    const cancelled = {
+      id: '6718f1d3a1b2c3d4e5f60719',
+      bookingNumber: 'K7Q2MX',
+      guestName: 'Ana Lopez',
+      guestEmail: 'ana@example.com',
+      guestPhone: '5550100123',
+      checkIn: '2026-10-27',
+      checkOut: '2026-10-29',
       status: 'cancelled',
-    });
-  });
+      createdAt: '2026-10-24T19:30:00.000Z',
+      cancelledAt: '2026-10-25T19:00:00.000Z',
+    };
+    mockFetch(200, cancelled);
 
-  it('throws a 404 ApiError for an unknown booking', async () => {
-    await expect(cancelBooking('missing')).rejects.toEqual(
-      new ApiError(404, ['Booking not found']),
+    await expect(cancelBooking('6718f1d3a1b2c3d4e5f60719')).resolves.toEqual(
+      cancelled,
+    );
+    expect(global.fetch).toHaveBeenCalledWith(
+      '/api/bookings/6718f1d3a1b2c3d4e5f60719/cancel',
+      { method: 'POST', headers: { 'Content-Type': 'application/json' } },
     );
   });
 
-  it('throws a 409 ApiError for a booking that is already cancelled', async () => {
-    const bookings = listMockBookings();
-    const cancelled = bookings.find(
-      (booking) => booking.status === 'cancelled',
-    )!;
+  it('keeps the id inside its own part of the path', async () => {
+    mockFetch(200, {});
 
-    await expect(cancelBooking(cancelled.id)).rejects.toEqual(
-      new ApiError(409, ['Booking is already cancelled']),
+    await cancelBooking('a/b');
+
+    expect(global.fetch).toHaveBeenCalledWith(
+      '/api/bookings/a%2Fb/cancel',
+      expect.anything(),
+    );
+  });
+
+  it('throws the generic message for an error the contract does not list, like an unknown route', async () => {
+    mockFetch(404, {
+      statusCode: 404,
+      message: 'Cannot POST /api/bookings/6adec6acfac186eda06e125f/cancel',
+      error: 'Not Found',
+    });
+
+    await expect(cancelBooking('6adec6acfac186eda06e125f')).rejects.toEqual(
+      new ApiError(404, [GENERIC_ERROR_MESSAGE]),
+    );
+  });
+
+  it('logs the real status and message of a hidden error to the console', async () => {
+    mockFetch(404, {
+      statusCode: 404,
+      message: 'Cannot POST /api/bookings/6adec6acfac186eda06e125f/cancel',
+    });
+
+    await expect(cancelBooking('6adec6acfac186eda06e125f')).rejects.toThrow();
+
+    expect(consoleError).toHaveBeenCalledWith(
+      'API 404 from /api/bookings/6adec6acfac186eda06e125f/cancel:',
+      ['Cannot POST /api/bookings/6adec6acfac186eda06e125f/cancel'],
+    );
+  });
+
+  it('does not log an error whose message is shown', async () => {
+    mockFetch(409, {
+      statusCode: 409,
+      message: 'Booking is already cancelled.',
+    });
+
+    await expect(cancelBooking('6adec6acfac186eda06e125f')).rejects.toThrow();
+
+    expect(consoleError).not.toHaveBeenCalled();
+  });
+
+  it('throws a 409 ApiError for a booking that is already cancelled', async () => {
+    mockFetch(409, {
+      statusCode: 409,
+      message: 'Booking is already cancelled.',
+    });
+
+    await expect(cancelBooking('6718f1d3a1b2c3d4e5f60719')).rejects.toEqual(
+      new ApiError(409, ['Booking is already cancelled.']),
     );
   });
 });
