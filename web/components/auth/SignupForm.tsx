@@ -22,7 +22,7 @@ const FIELDS = ['name', 'email', 'password'] as const;
 
 export default function SignupForm() {
   const router = useRouter();
-  const { run, loading, error, data } = useSignup();
+  const { run, loading, error } = useSignup();
   const [name, setName] = useState<string>('');
   const [email, setEmail] = useState<string>('');
   const [password, setPassword] = useState<string>('');
@@ -41,6 +41,10 @@ export default function SignupForm() {
     event.preventDefault();
     const staff = await run({ name, email, password });
     if (staff) {
+      setName('');
+      setEmail('');
+      setPassword('');
+      setPasswordTouched(false);
       router.push('/staff/bookings');
     }
   }
@@ -50,11 +54,7 @@ export default function SignupForm() {
       onSubmit={handleSubmit}
       errors={errors.form}
       actions={
-        <Button
-          type="submit"
-          disabled={!canSubmit}
-          loading={loading || data !== null}
-        >
+        <Button type="submit" disabled={!canSubmit} loading={loading}>
           Sign up
           <ArrowRightIcon />
         </Button>

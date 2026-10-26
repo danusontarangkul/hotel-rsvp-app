@@ -1,11 +1,16 @@
-import { ConflictException } from '@nestjs/common';
+import { ConflictException, UnauthorizedException } from '@nestjs/common';
 import { JwtService } from '@nestjs/jwt';
 import { Test } from '@nestjs/testing';
 import * as bcrypt from 'bcrypt';
 import { Types } from 'mongoose';
 import { StaffService } from '../staff/staff.service';
 import type { NewStaff, StaffRecord } from '../staff/staff.types';
-import { BCRYPT_COST, EMAIL_TAKEN } from './auth.constants';
+import {
+  BCRYPT_COST,
+  EMAIL_TAKEN,
+  TIMING_SAFE_PASSWORD_HASH,
+  WRONG_CREDENTIALS,
+} from './auth.constants';
 import { AuthService } from './auth.service';
 
 const signupDto = {
@@ -123,6 +128,68 @@ describe('AuthService', () => {
       staffService.create.mockRejectedValue(error);
 
       await expect(service.signup(signupDto)).rejects.toBe(error);
+    });
+  });
+
+  describe('login', () => {
+    const loginDto = { email: ' Sam@Hotel.com ', password: 'at-least-8' };
+
+    beforeEach(async () => {
+      staffService.findByEmail.mockResolvedValue(
+        staffRecord({
+          name: 'Sam Lee',
+          email: 'sam@hotel.com',
+          passwordHash: await bcrypt.hash('at-least-8', BCRYPT_COST),
+        }),
+      );
+    });
+
+    it('returns the staff member and a token for the right email and password', async () => {
+      const result = await service.login(loginDto);
+
+      expect(result).toEqual({
+        staff: {
+          id: '6718f0c2a1b2c3d4e5f60718',
+          name: 'Sam Lee',
+          email: 'sam@hotel.com',
+        },
+        token: 'signed-token',
+      });
+      expect(jwtService.signAsync).toHaveBeenCalledWith({
+        sub: '6718f0c2a1b2c3d4e5f60718',
+      });
+    });
+
+    it('looks the staff member up by their normalized email', async () => {
+      await service.login(loginDto);
+
+      expect(staffService.findByEmail).toHaveBeenCalledWith('sam@hotel.com');
+    });
+
+    it('rejects a wrong password', async () => {
+      await expect(
+        service.login({ ...loginDto, password: 'wrong-password' }),
+      ).rejects.toEqual(new UnauthorizedException(WRONG_CREDENTIALS));
+      expect(jwtService.signAsync).not.toHaveBeenCalled();
+    });
+
+    it('rejects an unknown email with the same message', async () => {
+      staffService.findByEmail.mockResolvedValue(null);
+
+      await expect(service.login(loginDto)).rejects.toEqual(
+        new UnauthorizedException(WRONG_CREDENTIALS),
+      );
+      expect(jwtService.signAsync).not.toHaveBeenCalled();
+    });
+
+    it('does not return the password hash', async () => {
+      const result = await service.login(loginDto);
+
+      expect(result.staff).not.toHaveProperty('passwordHash');
+    });
+
+    it('checks unknown emails against a stand-in hash with the same cost', () => {
+      expect(bcrypt.getRounds(TIMING_SAFE_PASSWORD_HASH)).toBe(BCRYPT_COST);
     });
   });
 });

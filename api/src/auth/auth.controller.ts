@@ -11,6 +11,7 @@ import type { CookieOptions, Response } from 'express';
 import { TOKEN_COOKIE, TOKEN_COOKIE_MAX_AGE_MS } from './auth.constants';
 import { AuthService } from './auth.service';
 import type { StaffResponse } from './auth.types';
+import { LoginDto } from './dto/login.dto';
 import { SignupDto } from './dto/signup.dto';
 
 @Controller('auth')
@@ -26,10 +27,18 @@ export class AuthController {
     @Res({ passthrough: true }) response: Response,
   ): Promise<StaffResponse> {
     const { staff, token } = await this.authService.signup(dto);
-    response.cookie(TOKEN_COOKIE, token, {
-      ...this.cookieOptions(),
-      maxAge: TOKEN_COOKIE_MAX_AGE_MS,
-    });
+    this.setTokenCookie(response, token);
+    return staff;
+  }
+
+  @Post('login')
+  @HttpCode(HttpStatus.OK)
+  async login(
+    @Body() dto: LoginDto,
+    @Res({ passthrough: true }) response: Response,
+  ): Promise<StaffResponse> {
+    const { staff, token } = await this.authService.login(dto);
+    this.setTokenCookie(response, token);
     return staff;
   }
 
@@ -37,6 +46,13 @@ export class AuthController {
   @HttpCode(HttpStatus.NO_CONTENT)
   logout(@Res({ passthrough: true }) response: Response): void {
     response.clearCookie(TOKEN_COOKIE, this.cookieOptions());
+  }
+
+  private setTokenCookie(response: Response, token: string): void {
+    response.cookie(TOKEN_COOKIE, token, {
+      ...this.cookieOptions(),
+      maxAge: TOKEN_COOKIE_MAX_AGE_MS,
+    });
   }
 
   private cookieOptions(): CookieOptions {

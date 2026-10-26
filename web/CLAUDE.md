@@ -115,6 +115,7 @@ Link to a frame: `https://www.figma.com/design/y8tAJJMZDW2c5K0sspUj0D/Untitled?n
 - `Form` sets `noValidate`: the browser's own validation bubbles never show. Field errors use the Figma copy under the field, shown once the user leaves the field (e.g. "Password must be at least 8 characters.").
 - Password fields use `PasswordInput`, which has the show/hide button.
 - Email fields use `EmailInput` (label "Email address", `type="email"`, `autoComplete="email"`).
+- After a successful submit, clear every field (and any "touched" state) and stop the loading spinner as soon as the request succeeds, before navigating or showing a result modal. A failed submit keeps the fields filled.
 - Phone fields use `PhoneInput`. It shows `(123) 456-7890` as the user types but its `value` and `onChange` are digits only; send and store digits, and format with `formatPhone` from `lib/phone.ts` wherever a number is shown.
 
 ## Tests

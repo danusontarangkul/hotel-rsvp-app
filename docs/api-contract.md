@@ -121,8 +121,10 @@ User Story 4.
 **Errors**
 | Status | When |
 |---|---|
-| 400 | Email or password missing. |
-| 401 | Wrong email or password (same message for both). |
+| 400 | Email or password missing. `message` is `["Email is required."]` and/or `["Password is required."]`. |
+| 401 | Wrong email or password. `message` is exactly `Wrong email or password.` for both, and both take the same time, so the response never reveals whether an email is registered. |
+
+- `email` is trimmed and matched case-insensitively.
 
 ## POST /api/auth/logout
 

@@ -4,6 +4,10 @@ export type StaffResponse = {
   email: string;
 };
 
+export type JwtPayload = {
+  sub: string;
+};
+
 export type AuthResult = {
   staff: StaffResponse;
   token: string;
