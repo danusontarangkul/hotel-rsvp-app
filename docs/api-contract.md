@@ -11,6 +11,7 @@ NestJS REST API. All paths start with `/api` (the Next.js rewrite forwards them 
 | POST | `/api/auth/signup` | None | User Story 3: Staff sign up |
 | POST | `/api/auth/login` | None | User Story 4: Staff log in |
 | POST | `/api/auth/logout` | None | User Story 4: Staff log out |
+| GET | `/api/auth/me` | Staff | User Story 4: Show log out on the home page |
 | GET | `/api/bookings` | Staff | User Story 5: View bookings |
 | POST | `/api/bookings/:id/cancel` | Staff | User Story 6: Cancel |
 
@@ -132,6 +133,17 @@ User Story 4.
 | 401 | Wrong email or password. `message` is exactly `Wrong email or password.` for both, and both take the same time, so the response never reveals whether an email is registered. |
 
 - `email` is trimmed and matched case-insensitively.
+
+## GET /api/auth/me
+
+User Story 4. Returns the logged-in staff member. The home page uses it to show "Log out" instead of "Staff log in" in the header.
+
+**Response `200`**
+```json
+{ "id": "6718f0c2a1b2c3d4e5f60718", "name": "Sam Lee", "email": "sam@hotel.com" }
+```
+
+**Errors:** `401` if not logged in, or if the staff member in the token no longer exists. The web app treats this `401` as "nobody is logged in", not as an error.
 
 ## POST /api/auth/logout
 

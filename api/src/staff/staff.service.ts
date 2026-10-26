@@ -18,6 +18,10 @@ export class StaffService {
       .exec();
   }
 
+  findById(id: string): Promise<StaffRecord | null> {
+    return this.staffModel.findById(id).lean<StaffRecord>().exec();
+  }
+
   async create(staff: NewStaff): Promise<StaffRecord> {
     const created = await this.staffModel.create({
       ...staff,

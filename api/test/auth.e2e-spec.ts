@@ -325,3 +325,63 @@ describe('POST /api/auth/login', () => {
     }).expect(400);
   });
 });
+
+describe('GET /api/auth/me', () => {
+  let app: INestApplication<App>;
+  let clearDatabase: () => Promise<void>;
+
+  beforeAll(async () => {
+    ({ app, clearDatabase } = await createTestApp());
+  });
+
+  afterEach(async () => {
+    await clearDatabase();
+  });
+
+  afterAll(async () => {
+    await app.close();
+  });
+
+  function me(cookie?: string) {
+    const call = request(app.getHttpServer()).get('/api/auth/me');
+    return cookie ? call.set('Cookie', cookie) : call;
+  }
+
+  it('returns 200 with the logged-in staff member', async () => {
+    const signup = await request(app.getHttpServer())
+      .post('/api/auth/signup')
+      .send(validSignup)
+      .expect(201);
+    const [cookie] = signup.get('Set-Cookie') ?? [];
+
+    const response = await me(cookie.split(';')[0]).expect(200);
+
+    expect(response.body).toEqual(signup.body);
+    expect(response.body).toEqual({
+      id: expect.stringMatching(/^[a-f0-9]{24}$/) as string,
+      name: 'Sam Lee',
+      email: 'sam@hotel.com',
+    });
+  });
+
+  it('returns 401 when not logged in', async () => {
+    const response = await me().expect(401);
+
+    expect((response.body as ErrorBody).statusCode).toBe(401);
+  });
+
+  it('returns 401 for a token cookie that is not valid', async () => {
+    await me('token=not-a-real-token').expect(401);
+  });
+
+  it('returns 401 when the staff member no longer exists', async () => {
+    const signup = await request(app.getHttpServer())
+      .post('/api/auth/signup')
+      .send(validSignup)
+      .expect(201);
+    const [cookie] = signup.get('Set-Cookie') ?? [];
+    await clearDatabase();
+
+    await me(cookie.split(';')[0]).expect(401);
+  });
+});

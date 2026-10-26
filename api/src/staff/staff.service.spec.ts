@@ -1,7 +1,7 @@
 import { getModelToken, MongooseModule } from '@nestjs/mongoose';
 import { Test, type TestingModule } from '@nestjs/testing';
 import { MongoMemoryServer } from 'mongodb-memory-server';
-import type { Model } from 'mongoose';
+import { Types, type Model } from 'mongoose';
 import { Staff, StaffSchema } from './staff.schema';
 import { StaffService } from './staff.service';
 
@@ -85,6 +85,26 @@ describe('StaffService', () => {
 
     it('returns null for an unknown email', async () => {
       await expect(service.findByEmail('nobody@hotel.com')).resolves.toBeNull();
+    });
+  });
+
+  describe('findById', () => {
+    it('finds a staff member by their id', async () => {
+      const created = await service.create({
+        name: 'Sam Lee',
+        email: 'sam@hotel.com',
+        passwordHash: 'hash',
+      });
+
+      await expect(
+        service.findById(created._id.toString()),
+      ).resolves.toMatchObject({ name: 'Sam Lee', email: 'sam@hotel.com' });
+    });
+
+    it('returns null for an unknown id', async () => {
+      await expect(
+        service.findById(new Types.ObjectId().toString()),
+      ).resolves.toBeNull();
     });
   });
 });
