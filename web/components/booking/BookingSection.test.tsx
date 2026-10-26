@@ -109,7 +109,27 @@ describe('BookingSection', () => {
     ).toHaveTextContent('K7Q2MX');
   });
 
-  it('clears the form and reloads the dates after closing the confirmation', async () => {
+  it('clears the dates and guest details as soon as the booking succeeds', async () => {
+    mockGetAvailability.mockResolvedValue(availability);
+    mockCreateBooking.mockResolvedValue({
+      bookingNumber: 'K7Q2MX',
+      checkIn: '2026-11-08',
+      checkOut: '2026-11-11',
+    });
+    render(<BookingSection />);
+
+    await pickStayAndDetails(user);
+    await user.click(screen.getByRole('button', { name: 'Book' }));
+
+    expect(
+      await screen.findByRole('dialog', { name: 'Booking confirmed' }),
+    ).toHaveTextContent('K7Q2MX');
+    expect(screen.getByLabelText('Check-in')).toHaveValue('');
+    expect(screen.getByLabelText('Check-out')).toHaveValue('');
+    expect(screen.queryByLabelText('Full name')).not.toBeInTheDocument();
+  });
+
+  it('reloads the dates after closing the confirmation', async () => {
     mockGetAvailability.mockResolvedValue(availability);
     mockCreateBooking.mockResolvedValue({
       bookingNumber: 'K7Q2MX',

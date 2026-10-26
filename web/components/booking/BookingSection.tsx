@@ -49,14 +49,15 @@ export default function BookingSection() {
   async function handleBook(details: GuestDetails) {
     const { checkIn, checkOut } = selection;
     if (checkIn && checkOut) {
-      await booking.run({ ...details, checkIn, checkOut });
+      const confirmation = await booking.run({ ...details, checkIn, checkOut });
+      if (confirmation) {
+        setFormKey((current) => current + 1);
+        setSelection(EMPTY_SELECTION);
+      }
     }
   }
 
   function handleCloseResult() {
-    if (booking.data) {
-      setFormKey((current) => current + 1);
-    }
     booking.reset();
     setSelection(EMPTY_SELECTION);
     availability.refetch();

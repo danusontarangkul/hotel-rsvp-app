@@ -197,3 +197,131 @@ describe('POST /api/auth/logout', () => {
     expect(cookie).toMatch(/^token=;/);
   });
 });
+
+describe('POST /api/auth/login', () => {
+  let app: INestApplication<App>;
+  let clearDatabase: () => Promise<void>;
+
+  beforeAll(async () => {
+    ({ app, clearDatabase } = await createTestApp());
+  });
+
+  beforeEach(async () => {
+    await request(app.getHttpServer())
+      .post('/api/auth/signup')
+      .send(validSignup)
+      .expect(201);
+  });
+
+  afterEach(async () => {
+    await clearDatabase();
+  });
+
+  afterAll(async () => {
+    await app.close();
+  });
+
+  function login(body: object) {
+    return request(app.getHttpServer()).post('/api/auth/login').send(body);
+  }
+
+  it('returns 200 with the staff member’s id, name and email', async () => {
+    const response = await login({
+      email: validSignup.email,
+      password: validSignup.password,
+    }).expect(200);
+
+    expect(response.body).toEqual({
+      id: expect.stringMatching(/^[a-f0-9]{24}$/) as string,
+      name: 'Sam Lee',
+      email: 'sam@hotel.com',
+    });
+  });
+
+  it('sets the httpOnly token cookie for 7 days', async () => {
+    const response = await login({
+      email: validSignup.email,
+      password: validSignup.password,
+    }).expect(200);
+
+    const [cookie] = response.get('Set-Cookie') ?? [];
+    expect(cookie).toMatch(/^token=[^;]+;/);
+    expect(cookie).toContain('HttpOnly');
+    expect(cookie).toContain('SameSite=Lax');
+    expect(cookie).toContain('Max-Age=604800');
+    expect(cookie).toContain('Path=/');
+  });
+
+  it('accepts the email in any case and with spaces around it', async () => {
+    await login({
+      email: '  SAM@Hotel.com ',
+      password: validSignup.password,
+    }).expect(200);
+  });
+
+  it('never returns the password or its hash', async () => {
+    const response = await login({
+      email: validSignup.email,
+      password: validSignup.password,
+    }).expect(200);
+
+    expect(JSON.stringify(response.body)).not.toContain('password');
+  });
+
+  it('returns 401 for a wrong password', async () => {
+    const response = await login({
+      email: validSignup.email,
+      password: 'wrong-password',
+    }).expect(401);
+
+    expect((response.body as ErrorBody).message).toBe(
+      'Wrong email or password.',
+    );
+  });
+
+  it('returns 401 with the same message for an unknown email', async () => {
+    const response = await login({
+      email: 'nobody@hotel.com',
+      password: validSignup.password,
+    }).expect(401);
+
+    expect((response.body as ErrorBody).message).toBe(
+      'Wrong email or password.',
+    );
+  });
+
+  it('does not set a cookie when the password is wrong', async () => {
+    const response = await login({
+      email: validSignup.email,
+      password: 'wrong-password',
+    }).expect(401);
+
+    expect(response.get('Set-Cookie')).toBeUndefined();
+  });
+
+  it.each([
+    ['the email is missing', { password: 'at-least-8' }, 'Email is required.'],
+    [
+      'the email is blank',
+      { email: '   ', password: 'at-least-8' },
+      'Email is required.',
+    ],
+    [
+      'the password is missing',
+      { email: 'sam@hotel.com' },
+      'Password is required.',
+    ],
+  ])('returns 400 when %s', async (_, body, message) => {
+    const response = await login(body).expect(400);
+
+    expect((response.body as ErrorBody).message).toEqual([message]);
+  });
+
+  it('returns 400 for an unknown field', async () => {
+    await login({
+      email: validSignup.email,
+      password: validSignup.password,
+      remember: true,
+    }).expect(400);
+  });
+});

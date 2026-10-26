@@ -15,7 +15,7 @@ const FIELDS = ['email', 'password'] as const;
 
 export default function LoginForm() {
   const router = useRouter();
-  const { run, loading, error, data } = useLogin();
+  const { run, loading, error } = useLogin();
   const [email, setEmail] = useState<string>('');
   const [password, setPassword] = useState<string>('');
 
@@ -26,6 +26,8 @@ export default function LoginForm() {
     event.preventDefault();
     const staff = await run({ email, password });
     if (staff) {
+      setEmail('');
+      setPassword('');
       router.push('/staff/bookings');
     }
   }
@@ -35,11 +37,7 @@ export default function LoginForm() {
       onSubmit={handleSubmit}
       errors={errors.form}
       actions={
-        <Button
-          type="submit"
-          disabled={!canSubmit}
-          loading={loading || data !== null}
-        >
+        <Button type="submit" disabled={!canSubmit} loading={loading}>
           Log in
           <ArrowRightIcon />
         </Button>

@@ -25,6 +25,8 @@ Back end conventions.
 - Controllers only take the DTO and call the service. No logic or database calls in controllers.
 - Booking rules and database access live in services.
 - Throw NestJS built-in exceptions (`BadRequestException`, `ConflictException`, `NotFoundException`, `UnauthorizedException`). Never build error responses by hand.
+- Only `try`/`catch` an error you expect and can translate into a status from `docs/api-contract.md` (e.g. a duplicate-key `11000` on insert becomes `409`). Re-throw anything else unchanged. Everything you don't expect (database down, missing config, bugs) is left to NestJS, which returns `500` and logs it; don't wrap calls just to re-throw, log, or replace the error with a friendlier one.
+- "Not found" and "doesn't match" are values, not errors: check `null` / `false` with an `if` and throw the contract exception.
 - Use `@HttpCode` where the default is wrong: `200` for login and cancel, `204` for logout.
 
 ## Validation and DTOs

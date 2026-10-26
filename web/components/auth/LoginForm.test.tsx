@@ -44,6 +44,25 @@ describe('LoginForm', () => {
     expect(push).toHaveBeenCalledWith('/staff/bookings');
   });
 
+  it('clears the fields and stops loading after logging in', async () => {
+    mockLogin.mockResolvedValue({
+      id: '1',
+      name: 'Sam Lee',
+      email: 'sam@hotel.com',
+    });
+    render(<LoginForm />);
+
+    await fillForm();
+    await userEvent.click(screen.getByRole('button', { name: 'Log in' }));
+
+    expect(screen.getByLabelText('Email address')).toHaveValue('');
+    expect(screen.getByLabelText('Password')).toHaveValue('');
+    expect(screen.getByRole('button', { name: 'Log in' })).toHaveAttribute(
+      'aria-busy',
+      'false',
+    );
+  });
+
   it('keeps the submit button disabled until both fields are filled', async () => {
     render(<LoginForm />);
     const button = screen.getByRole('button', { name: 'Log in' });
