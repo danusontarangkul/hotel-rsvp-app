@@ -13,6 +13,11 @@ export type NewBooking = {
   checkOut: string;
 };
 
+export type AvailabilityResponse = {
+  firstBookableDate: string;
+  bookedNights: string[];
+};
+
 export type CreateBookingResponse = {
   bookingNumber: string;
   checkIn: string;

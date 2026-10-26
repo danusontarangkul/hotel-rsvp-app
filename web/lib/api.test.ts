@@ -110,27 +110,26 @@ describe('login', () => {
 });
 
 describe('getAvailability', () => {
-  beforeEach(() => {
-    jest.useFakeTimers().setSystemTime(new Date(2026, 9, 25, 12));
-  });
-
-  afterEach(() => {
-    jest.useRealTimers();
-  });
-
-  it('returns every date from tomorrow as available', async () => {
-    await expect(getAvailability()).resolves.toEqual({
+  it('gets the first bookable date and booked nights from the API', async () => {
+    const availability = {
       firstBookableDate: '2026-10-26',
-      bookedNights: [],
+      bookedNights: ['2026-11-08', '2026-11-09'],
+    };
+    mockFetch(200, availability);
+
+    await expect(getAvailability()).resolves.toEqual(availability);
+    expect(global.fetch).toHaveBeenCalledWith('/api/availability', {
+      method: 'GET',
+      headers: { 'Content-Type': 'application/json' },
     });
   });
 
-  it('does not call the API while there is no back end', async () => {
-    global.fetch = jest.fn();
+  it('throws an ApiError when the request fails', async () => {
+    mockFetch(500, { statusCode: 500, message: 'Internal server error' });
 
-    await getAvailability();
-
-    expect(global.fetch).not.toHaveBeenCalled();
+    await expect(getAvailability()).rejects.toEqual(
+      new ApiError(500, ['Internal server error']),
+    );
   });
 });
 

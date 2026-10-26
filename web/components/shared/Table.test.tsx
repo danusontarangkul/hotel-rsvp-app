@@ -1,5 +1,7 @@
 import { render, screen } from '@testing-library/react';
-import Table, { TableCell, TableRow } from './Table';
+import Table from './Table';
+import TableCell from './TableCell';
+import TableRow from './TableRow';
 
 function renderTable() {
   return render(

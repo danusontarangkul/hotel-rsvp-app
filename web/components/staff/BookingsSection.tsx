@@ -6,7 +6,8 @@ import { useBookings } from '@/hooks/useBookings';
 import { useCancelBooking } from '@/hooks/useCancelBooking';
 import { useRedirectOnUnauthorized } from '@/hooks/useRedirectOnUnauthorized';
 import type { Booking } from '@/lib/types';
-import BookingsTable, { BookingsTableSkeleton } from './BookingsTable';
+import BookingsTable from './BookingsTable';
+import BookingsTableSkeleton from './BookingsTableSkeleton';
 import CancelBookingModal from './CancelBookingModal';
 
 export default function BookingsSection() {

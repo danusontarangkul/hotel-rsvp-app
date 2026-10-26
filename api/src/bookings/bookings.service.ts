@@ -21,6 +21,7 @@ import {
   MAX_BOOKING_NUMBER_ATTEMPTS,
 } from './bookings.constants';
 import type {
+  AvailabilityResponse,
   BookingRecord,
   CreateBookingResponse,
   NewBooking,
@@ -38,6 +39,20 @@ export class BookingsService {
     @Inject(CLOCK) private readonly clock: Clock,
   ) {}
 
+  async getAvailability(): Promise<AvailabilityResponse> {
+    const firstBookableDate = this.tomorrow();
+    const nights = await this.nightModel
+      .find({ _id: { $gte: firstBookableDate } })
+      .sort({ _id: 1 })
+      .select({ _id: 1 })
+      .lean<{ _id: string }[]>()
+      .exec();
+    return {
+      firstBookableDate,
+      bookedNights: nights.map((night) => night._id),
+    };
+  }
+
   async create(booking: NewBooking): Promise<CreateBookingResponse> {
     this.checkDates(booking.checkIn, booking.checkOut);
     const saved = await this.saveWithUniqueNumber({
@@ -51,8 +66,12 @@ export class BookingsService {
     };
   }
 
+  private tomorrow(): string {
+    return addDays(todayIn(HOTEL_TIME_ZONE, this.clock.now()), 1);
+  }
+
   private checkDates(checkIn: string, checkOut: string): void {
-    const tomorrow = addDays(todayIn(HOTEL_TIME_ZONE, this.clock.now()), 1);
+    const tomorrow = this.tomorrow();
     const problems: string[] = [];
     if (checkIn < tomorrow) {
       problems.push(CHECK_IN_TOO_EARLY);

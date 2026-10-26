@@ -1,36 +1,18 @@
 import Button from '@/components/shared/Button';
 import EmptyState from '@/components/shared/EmptyState';
-import Table, { TableCell, TableRow } from '@/components/shared/Table';
-import TableSkeleton from '@/components/shared/TableSkeleton';
+import Table from '@/components/shared/Table';
+import TableCell from '@/components/shared/TableCell';
+import TableRow from '@/components/shared/TableRow';
 import { formatDisplayDate } from '@/lib/dates';
 import { formatPhone } from '@/lib/phone';
 import type { Booking } from '@/lib/types';
 import BookingStatusBadge from './BookingStatusBadge';
+import { BOOKING_COLUMNS } from './bookingColumns';
 
 type BookingsTableProps = {
   bookings: Booking[];
   onCancel: (booking: Booking) => void;
 };
-
-const COLUMNS = [
-  'Guest',
-  'Contact details',
-  'Check-in',
-  'Check-out',
-  'Booking no.',
-  'Status',
-  'Action',
-];
-
-export function BookingsTableSkeleton() {
-  return (
-    <TableSkeleton
-      label="Loading bookings"
-      columns={COLUMNS}
-      twoLineColumns={['Contact details']}
-    />
-  );
-}
 
 export default function BookingsTable({
   bookings,
@@ -41,7 +23,7 @@ export default function BookingsTable({
   }
 
   return (
-    <Table columns={COLUMNS}>
+    <Table columns={BOOKING_COLUMNS}>
       {bookings.map((booking) => {
         const cancelled = booking.status === 'cancelled';
         return (

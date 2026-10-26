@@ -1,5 +1,7 @@
 import Skeleton from './Skeleton';
-import Table, { TableCell, TableRow } from './Table';
+import Table from './Table';
+import TableCell from './TableCell';
+import TableRow from './TableRow';
 
 type TableSkeletonProps = {
   label: string;

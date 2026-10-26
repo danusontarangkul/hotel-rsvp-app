@@ -1,6 +1,7 @@
 import { Module } from '@nestjs/common';
 import { MongooseModule } from '@nestjs/mongoose';
 import { CLOCK, systemClock } from '../common/clock';
+import { AvailabilityController } from './availability.controller';
 import { Booking, BookingSchema } from './booking.schema';
 import { BookingsController } from './bookings.controller';
 import { BookingsService } from './bookings.service';
@@ -13,7 +14,7 @@ import { Night, NightSchema } from './night.schema';
       { name: Night.name, schema: NightSchema },
     ]),
   ],
-  controllers: [BookingsController],
+  controllers: [AvailabilityController, BookingsController],
   providers: [BookingsService, { provide: CLOCK, useValue: systemClock }],
 })
 export class BookingsModule {}
