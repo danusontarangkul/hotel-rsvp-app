@@ -12,6 +12,7 @@ Read the relevant doc before changing anything it covers. Update the doc in the 
 - [docs/data-model.md](docs/data-model.md): MongoDB collections and fields.
 - [docs/api-contract.md](docs/api-contract.md): endpoints, requests, responses, errors, login cookie.
 - [docs/file-structure.md](docs/file-structure.md): folders, files, routes and conventions for both apps.
+- [docs/manual-tests.md](docs/manual-tests.md): manual test checklist for every functional requirement, including error cases.
 
 ## Commands
 

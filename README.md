@@ -39,6 +39,9 @@ Logged-in staff see every booking, active and cancelled, with the guest's contac
 9. CI setup
 10. Claude rules (CLAUDE.md)
 11. Code
+12. Testing
+    - Automated: unit tests for both apps and end-to-end tests for the API, run by CI on every push
+    - Manual: [manual test checklist](docs/manual-tests.md) for every functional requirement, including error cases
 
 ## How I Used AI
 
@@ -67,6 +70,7 @@ I built this with Claude and Claude Code as a collaborator, while making the dec
 - [Data Model](docs/data-model.md): database collections and fields.
 - [API Contract](docs/api-contract.md): API endpoints with requests and responses.
 - [File Structure](docs/file-structure.md): front end and back end folders and files.
+- [Manual Tests](docs/manual-tests.md): checklist for testing every functional requirement by hand, including error cases.
 
 ## Author
 
