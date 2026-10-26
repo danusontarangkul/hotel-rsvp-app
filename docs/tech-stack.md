@@ -21,7 +21,7 @@ Next.js forwards `/api/*` to NestJS with a rewrite in `next.config`.
 | Front end | Next.js (App Router), hosted on Vercel |
 | Styling | Tailwind CSS |
 | Calendar UI | react-day-picker |
-| Back end | NestJS 11 (not 12, which switches to Vitest and oxlint), hosted on Vercel |
+| Back end | NestJS 11 (not 12, which switches to Vitest and oxlint), hosted on Vercel. Its packages stay on the NestJS 11 line: `@nestjs/config` 4, `@nestjs/jwt` 11, `@nestjs/mongoose` 11 (their 12 versions are ESM-only and don't load in Jest). |
 | Validation | NestJS DTOs + class-validator + class-transformer |
 | Database | MongoDB Atlas (free tier) |
 | Data access | Mongoose via `@nestjs/mongoose` |
@@ -64,6 +64,7 @@ Next.js forwards `/api/*` to NestJS with a rewrite in `next.config`.
 
 - **api:** Jest, `@nestjs/testing` for unit tests, Supertest for end-to-end tests.
 - **Database in tests:** mongodb-memory-server in replica set mode (`MongoMemoryReplSet`) so transactions work.
+- **api Jest flag:** `npm test` and `npm run test:e2e` run with `NODE_OPTIONS=--experimental-vm-modules`. The MongoDB driver loads Node's `os` module with a dynamic `import()`; without the flag that import fails inside Jest and MongoDB 8 rejects the connection ("Missing required sub-document 'driver'").
 - **web:** Jest with the `next/jest` preset and React Testing Library.
 
 ## Linting and formatting
@@ -80,6 +81,7 @@ Next.js forwards `/api/*` to NestJS with a rewrite in `next.config`.
 | api | `MONGODB_URI` | Atlas connection string |
 | api | `JWT_SECRET` | Signs login tokens |
 | api | `PORT` | Local port only (e.g. `3001`); not used on Vercel |
+| api | `NODE_ENV` | `production` (set by Vercel) makes the login cookie `Secure` |
 | web | `API_URL` | Target of the `/api/*` rewrite (e.g. `http://localhost:3001`) |
 
 ## CI and deployment

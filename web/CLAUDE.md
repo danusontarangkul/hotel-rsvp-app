@@ -62,6 +62,7 @@ Link to a frame: `https://www.figma.com/design/y8tAJJMZDW2c5K0sspUj0D/Untitled?n
 ## Utils
 
 - Logic likely to be reused goes in a util function in `lib/`, with a test next to it.
+- Input cleaning is always a util (see the root `CLAUDE.md`), e.g. `toPhoneDigits` in `lib/phone.ts`.
 
 ## Buttons
 

@@ -31,4 +31,5 @@ npm run test:e2e     # api only
 - No TypeScript any
 - Keep the user's manual edits. If a file changed since Claude last wrote it (a class, value, wording, spacing), that change is intentional: build on it and never revert or overwrite it. If it seems to clash with a rule or the design, ask instead of changing it back.
 - Never write comments in code. No `//`, `/* */`, JSDoc or JSX comments. Make the code explain itself with clear names instead.
+- Any code that cleans or normalizes input (trimming, lowercasing, stripping characters, formatting) is a named util function with a test, never inline (`value.trim().toLowerCase()` in a service or component). Reuse the existing one if it exists: `normalizeEmail` and `trimString` in `api/src/common/`, `toPhoneDigits` and `isFilled` in `web/lib/`.
 - Every `if`, `else`, `for` and `while` body goes in braces on its own line, even a one-liner. No `if (x) doSomething();`. ESLint enforces this with `curly: 'all'` in both apps.

@@ -23,6 +23,12 @@ describe('groupErrors', () => {
     });
   });
 
+  it('matches the field name whatever its case', () => {
+    expect(
+      groupErrors(['Email must be a valid email address.'], FIELDS).fields,
+    ).toEqual({ email: ['Email must be a valid email address.'] });
+  });
+
   it('does not match a field name that is only a prefix of a word', () => {
     expect(groupErrors(['emails are closed'], FIELDS).form).toEqual([
       'emails are closed',

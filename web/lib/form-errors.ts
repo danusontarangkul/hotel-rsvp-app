@@ -11,7 +11,9 @@ export function groupErrors<Field extends string>(
 ): FormErrors<Field> {
   const result: FormErrors<Field> = { fields: {}, form: [] };
   for (const message of messages) {
-    const field = fields.find((name) => message.startsWith(`${name} `));
+    const field = fields.find((name) =>
+      message.toLowerCase().startsWith(`${name.toLowerCase()} `),
+    );
     if (field) {
       result.fields[field] = [...(result.fields[field] ?? []), message];
     } else {

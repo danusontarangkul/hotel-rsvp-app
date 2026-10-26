@@ -1,0 +1,2 @@
+export const DEFAULT_PORT = 3001;
+export const DUPLICATE_KEY_ERROR_CODE = 11000;
