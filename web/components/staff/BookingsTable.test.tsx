@@ -1,6 +1,6 @@
 import { render, screen, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
-import BookingsTable, { BookingsTableSkeleton } from './BookingsTable';
+import BookingsTable from './BookingsTable';
 import { activeBooking, cancelledBooking } from './testBookings';
 
 afterEach(() => {
@@ -66,16 +66,5 @@ describe('BookingsTable', () => {
 
     expect(screen.getByText('No bookings')).toBeInTheDocument();
     expect(screen.queryByRole('table')).not.toBeInTheDocument();
-  });
-
-  it('shows a loading skeleton with the booking columns', () => {
-    render(<BookingsTableSkeleton />);
-
-    expect(
-      screen.getByRole('status', { name: 'Loading bookings' }),
-    ).toBeInTheDocument();
-    expect(
-      screen.getByRole('columnheader', { name: 'Contact details' }),
-    ).toBeInTheDocument();
   });
 });

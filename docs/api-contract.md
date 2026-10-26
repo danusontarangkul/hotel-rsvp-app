@@ -41,6 +41,8 @@ User Story 1. Returns the booked nights from tomorrow onward.
 ```
 
 - `firstBookableDate` is tomorrow's date in the hotel's time zone. Today and earlier dates are blocked.
+- `bookedNights` is sorted earliest first and has no today or past nights. A stay's check-out day is not a night, so it is never listed.
+- No login needed.
 - A night listed here cannot be the start of a stay or inside one. A date can be a check-out day even if it is booked (same-day turnover).
 
 ## POST /api/bookings

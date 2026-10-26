@@ -1,5 +1,3 @@
-import { addDays } from 'date-fns';
-import { toDateString } from './dates';
 import { cancelMockBooking, listMockBookings } from './mock-bookings';
 import type {
   ApiErrorBody,
@@ -83,10 +81,7 @@ export function login(input: LoginInput): Promise<Staff> {
 }
 
 export function getAvailability(): Promise<Availability> {
-  return Promise.resolve({
-    firstBookableDate: toDateString(addDays(new Date(), 1)),
-    bookedNights: [],
-  });
+  return request<Availability>('/api/availability', { method: 'GET' });
 }
 
 export function createBooking(

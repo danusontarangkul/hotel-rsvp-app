@@ -53,9 +53,9 @@ describe('BookingSection', () => {
     mockGetAvailability.mockReturnValue(new Promise(() => {}));
     render(<BookingSection />);
 
-    expect(screen.getByRole('status')).toHaveTextContent(
-      'Loading available dates…',
-    );
+    expect(
+      screen.getByRole('status', { name: 'Loading available dates' }),
+    ).toHaveAttribute('aria-busy', 'true');
   });
 
   it('shows the error and tries again when loading the dates fails', async () => {

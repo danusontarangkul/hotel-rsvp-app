@@ -35,6 +35,13 @@ web/
 │   │   ├── BookingSection.test.tsx
 │   │   ├── AvailabilityCalendar.tsx
 │   │   ├── AvailabilityCalendar.test.tsx
+│   │   ├── AvailabilityCalendarSkeleton.tsx
+│   │   ├── AvailabilityCalendarSkeleton.test.tsx
+│   │   ├── StayDayButton.tsx
+│   │   ├── StayDayButton.test.tsx
+│   │   ├── CalendarLegend.tsx
+│   │   ├── CalendarLegend.test.tsx
+│   │   ├── calendarLayout.ts
 │   │   ├── BookingForm.tsx
 │   │   ├── BookingForm.test.tsx
 │   │   ├── BookingModal.tsx
@@ -53,6 +60,9 @@ web/
 │   │   ├── BookingsSection.test.tsx
 │   │   ├── BookingsTable.tsx
 │   │   ├── BookingsTable.test.tsx
+│   │   ├── BookingsTableSkeleton.tsx
+│   │   ├── BookingsTableSkeleton.test.tsx
+│   │   ├── bookingColumns.ts
 │   │   ├── BookingStatusBadge.tsx
 │   │   ├── BookingStatusBadge.test.tsx
 │   │   ├── CancelBookingModal.tsx
@@ -73,10 +83,8 @@ web/
 │       ├── PasswordInput.test.tsx
 │       ├── TextLink.tsx
 │       ├── TextLink.test.tsx
-│       ├── LoadingMessage.tsx
 │       ├── LoadError.tsx
 │       ├── LoadError.test.tsx
-│       ├── LoadingMessage.test.tsx
 │       ├── Modal.tsx
 │       ├── Modal.test.tsx
 │       ├── NavLink.tsx
@@ -89,6 +97,10 @@ web/
 │       ├── Skeleton.test.tsx
 │       ├── Table.tsx
 │       ├── Table.test.tsx
+│       ├── TableRow.tsx
+│       ├── TableRow.test.tsx
+│       ├── TableCell.tsx
+│       ├── TableCell.test.tsx
 │       ├── TableSkeleton.tsx
 │       ├── TableSkeleton.test.tsx
 │       ├── TextInput.tsx
@@ -270,7 +282,7 @@ Unit tests (`*.spec.ts`) sit next to the file they test. End-to-end tests live i
 - `shared/SiteHeader.tsx` is added per page, not in `layout.tsx`. On `/` it has a "Staff log in" link; on `/staff/bookings` it has a "Bookings" `NavLink` and the `LogoutButton`. Sign up and log in have no header. No footer. No `/staff` index page. No separate staff layout.
 - Log out always goes to `/staff/login`, even if the request fails.
 - Staff pages call `useRedirectOnUnauthorized(...errors)` so a `401` from any of their requests goes to `/staff/login`. Forms that expect a `401` (log in) don't use it.
-- Tables use `shared/Table.tsx` (`Table`, `TableRow`, `TableCell`). On screens narrower than `lg` each row shows as a card: the header row is hidden and each `TableCell` shows its `label`. Nothing scrolls sideways.
+- Tables use `shared/Table.tsx`, `shared/TableRow.tsx` and `shared/TableCell.tsx`. On screens narrower than `lg` each row shows as a card: the header row is hidden and each `TableCell` shows its `label`. Nothing scrolls sideways.
 - No `loading.tsx`, `error.tsx` or middleware.
 
 ### Back end

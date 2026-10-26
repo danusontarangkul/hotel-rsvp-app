@@ -17,7 +17,7 @@ import {
   MAX_BOOKING_NUMBER_ATTEMPTS,
 } from './bookings.constants';
 import { BookingsService } from './bookings.service';
-import type { NewBooking } from './bookings.types';
+import type { BookingRecord, NewBooking } from './bookings.types';
 import { Night, NightSchema } from './night.schema';
 
 jest.mock('./booking-number', () => ({
@@ -81,6 +81,81 @@ describe('BookingsService', () => {
     await replSet.stop();
   });
 
+  async function savedBooking(bookingNumber: string): Promise<BookingRecord> {
+    const booking = await bookingModel
+      .findOne({ bookingNumber })
+      .lean<BookingRecord>()
+      .exec();
+    if (!booking) {
+      throw new Error(`No booking saved with number ${bookingNumber}`);
+    }
+    return booking;
+  }
+
+  async function bookedNightIds(): Promise<string[]> {
+    const nights = await nightModel
+      .find()
+      .sort({ _id: 1 })
+      .lean<Night[]>()
+      .exec();
+    return nights.map((night) => night._id);
+  }
+
+  describe('getAvailability', () => {
+    it('gives tomorrow in Los Angeles as the first bookable date', async () => {
+      await expect(service.getAvailability()).resolves.toEqual({
+        firstBookableDate: '2026-10-26',
+        bookedNights: [],
+      });
+    });
+
+    it('lists the booked nights in date order', async () => {
+      await service.create({
+        ...stay,
+        checkIn: '2026-11-20',
+        checkOut: '2026-11-22',
+      });
+      await service.create(stay);
+
+      const { bookedNights } = await service.getAvailability();
+
+      expect(bookedNights).toEqual([
+        '2026-11-08',
+        '2026-11-09',
+        '2026-11-10',
+        '2026-11-20',
+        '2026-11-21',
+      ]);
+    });
+
+    it('does not list a check-out day, so it stays open for check-in', async () => {
+      await service.create(stay);
+
+      const { bookedNights } = await service.getAvailability();
+
+      expect(bookedNights).not.toContain('2026-11-11');
+    });
+
+    it('leaves out today and past nights', async () => {
+      const { bookingNumber } = await service.create(stay);
+      const { _id: bookingId } = await savedBooking(bookingNumber);
+      await nightModel.insertMany([
+        { _id: '2026-10-24', bookingId },
+        { _id: '2026-10-25', bookingId },
+        { _id: '2026-10-26', bookingId },
+      ]);
+
+      const { bookedNights } = await service.getAvailability();
+
+      expect(bookedNights).toEqual([
+        '2026-10-26',
+        '2026-11-08',
+        '2026-11-09',
+        '2026-11-10',
+      ]);
+    });
+  });
+
   describe('create', () => {
     it('returns the booking number and dates', async () => {
       const result = await service.create(stay);
@@ -95,8 +170,7 @@ describe('BookingsService', () => {
     it('saves an active booking with a lowercase email', async () => {
       const { bookingNumber } = await service.create(stay);
 
-      const saved = await bookingModel.findOne({ bookingNumber }).lean();
-      expect(saved).toMatchObject({
+      expect(await savedBooking(bookingNumber)).toMatchObject({
         guestName: 'Maya Chen',
         guestEmail: 'maya.chen@example.com',
         guestPhone: '4155550349',
@@ -108,16 +182,16 @@ describe('BookingsService', () => {
     it('saves one night per night of the stay, linked to the booking', async () => {
       const { bookingNumber } = await service.create(stay);
 
-      const booking = await bookingModel.findOne({ bookingNumber }).lean();
-      const nights = await nightModel.find().sort({ _id: 1 }).lean();
-      expect(nights.map((night) => night._id)).toEqual([
+      const booking = await savedBooking(bookingNumber);
+      const nights = await nightModel.find().lean<Night[]>().exec();
+      expect(await bookedNightIds()).toEqual([
         '2026-11-08',
         '2026-11-09',
         '2026-11-10',
       ]);
-      expect(
-        nights.every((night) => night.bookingId.equals(booking!._id)),
-      ).toBe(true);
+      expect(nights.every((night) => night.bookingId.equals(booking._id))).toBe(
+        true,
+      );
     });
 
     it('accepts a check-in of tomorrow in Los Angeles', async () => {

@@ -3,7 +3,6 @@
 import { useState } from 'react';
 import Card from '@/components/shared/Card';
 import LoadError from '@/components/shared/LoadError';
-import LoadingMessage from '@/components/shared/LoadingMessage';
 import SectionHeading from '@/components/shared/SectionHeading';
 import { useAvailability } from '@/hooks/useAvailability';
 import { useCreateBooking } from '@/hooks/useCreateBooking';
@@ -11,6 +10,7 @@ import { EMPTY_SELECTION, selectDate, type StaySelection } from '@/lib/dates';
 import type { ApiError } from '@/lib/api';
 import type { BookingConfirmation, GuestDetails } from '@/lib/types';
 import AvailabilityCalendar from './AvailabilityCalendar';
+import AvailabilityCalendarSkeleton from './AvailabilityCalendarSkeleton';
 import BookingForm from './BookingForm';
 import BookingModal, { type BookingResult } from './BookingModal';
 
@@ -68,7 +68,7 @@ export default function BookingSection() {
       <Card>
         <SectionHeading variant="label">Select dates</SectionHeading>
         {availability.loading && !availability.data && (
-          <LoadingMessage>Loading available dates…</LoadingMessage>
+          <AvailabilityCalendarSkeleton />
         )}
         {availability.error && (
           <LoadError

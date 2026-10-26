@@ -7,4 +7,10 @@ describe('Skeleton', () => {
 
     expect(container.firstChild).toHaveAttribute('aria-hidden', 'true');
   });
+
+  it('can be a day-sized square that is also hidden from screen readers', () => {
+    const { container } = render(<Skeleton shape="day" />);
+
+    expect(container.firstChild).toHaveAttribute('aria-hidden', 'true');
+  });
 });

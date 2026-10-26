@@ -41,6 +41,8 @@ Link to a frame: `https://www.figma.com/design/y8tAJJMZDW2c5K0sspUj0D/Untitled?n
 ## Shared components
 
 - Reuse components in `components/shared/` wherever possible. Add a new shared component instead of repeating markup.
+- One component per file, named after it (`StayDayButton.tsx` exports `StayDayButton` as its default), with its own test file. This includes small helper components and skeletons (`AvailabilityCalendarSkeleton.tsx` sits next to `AvailabilityCalendar.tsx`). The only exception is `components/shared/icons.tsx`, a set of one-line icons built on one helper.
+- Values a component and its skeleton both need (columns, layout sizes) go in a small `.ts` file next to them (`bookingColumns.ts`, `calendarLayout.ts`) so the two can't drift apart.
 - Every page is wrapped in `Page` (`width="narrow"` for single forms, `"wide"` for everything else) and has one `PageHeading`. No raw `<main>` or `<h1>` in pages.
 - Every form uses `Form`, so fields and actions have the same spacing. No raw `<form>`.
 - `Form` lays out every form the same way: fields (`children`), then the buttons (`actions`), then the form-level errors (`errors`) at the bottom. Pass form-level errors to `Form`; don't render `ErrorMessage` for them yourself.
@@ -76,7 +78,7 @@ Link to a frame: `https://www.figma.com/design/y8tAJJMZDW2c5K0sspUj0D/Untitled?n
 
 ## Loading
 
-- A table that fetches data shows a skeleton of itself until the data arrives: `components/shared/TableSkeleton.tsx` with the same columns, so nothing shifts when the rows load. Other sections that fetch data show `components/shared/LoadingMessage.tsx`. If loading fails, show `components/shared/LoadError.tsx` with the error's `messages` and `onRetry={refetch}` (the error plus a "Try again" button). Don't build this by hand.
+- Anything that fetches data shows a skeleton of itself until the data arrives, laid out like the real content so nothing shifts when it loads. Tables use `components/shared/TableSkeleton.tsx` with the same columns; other sections build theirs from `components/shared/Skeleton.tsx` next to the real component (e.g. `AvailabilityCalendarSkeleton`). The skeleton is a `role="status"` with an `aria-label` saying what is loading. No spinner-and-text loading messages. If loading fails, show `components/shared/LoadError.tsx` with the error's `messages` and `onRetry={refetch}` (the error plus a "Try again" button). Don't build this by hand.
 - Nothing shows stale data after a successful change; call the query hook's `refetch` or update state.
 
 ## Errors
@@ -92,7 +94,7 @@ Link to a frame: `https://www.figma.com/design/y8tAJJMZDW2c5K0sspUj0D/Untitled?n
 
 - Build mobile first: unprefixed Tailwind classes are the phone layout, and `sm:` and up add the wider layout. No `max-*:` variants.
 - On small screens, everything stacks vertically: anything side by side on desktop (fields, buttons, calendar and form, table columns) is `flex-col` by default and becomes a row only at `sm:` or wider (e.g. `flex flex-col gap-2 sm:flex-row`).
-- Tables become stacked cards on small screens, one row per card with each value next to its label. Build every table with `Table`, `TableRow` and `TableCell` from `components/shared/Table.tsx`, which do this; give each `TableCell` the same `label` as its column. No raw `<table>`.
+- Tables become stacked cards on small screens, one row per card with each value next to its label. Build every table with `Table`, `TableRow` and `TableCell` (each in its own file in `components/shared/`), which do this; give each `TableCell` the same `label` as its column. No raw `<table>`.
 - Modals and buttons in a stacked layout are full width on small screens.
 - Use Tailwind's breakpoints only. No `@media` rules in CSS files, no custom breakpoint values, no JavaScript screen-size checks.
 - Nothing scrolls sideways at 320px wide.
