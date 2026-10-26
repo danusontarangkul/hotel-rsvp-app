@@ -1,4 +1,4 @@
-import { cancelMockBooking, listMockBookings } from './mock-bookings';
+import { cancelMockBooking } from './mock-bookings';
 import type {
   ApiErrorBody,
   Availability,
@@ -98,7 +98,7 @@ export function logout(): Promise<void> {
 }
 
 export function getBookings(): Promise<Booking[]> {
-  return Promise.resolve(listMockBookings());
+  return request<Booking[]>('/api/bookings', { method: 'GET' });
 }
 
 export function cancelBooking(id: string): Promise<Booking> {

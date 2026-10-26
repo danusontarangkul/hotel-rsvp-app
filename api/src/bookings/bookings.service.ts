@@ -13,6 +13,7 @@ import { addDays, nightsBetween, todayIn } from '../common/dates';
 import { normalizeEmail } from '../common/email';
 import { isDuplicateKeyError } from '../common/mongo-errors';
 import { generateBookingNumber } from './booking-number';
+import { toBookingResponse } from './booking-response';
 import { Booking } from './booking.schema';
 import {
   CHECK_IN_TOO_EARLY,
@@ -23,6 +24,7 @@ import {
 import type {
   AvailabilityResponse,
   BookingRecord,
+  BookingResponse,
   CreateBookingResponse,
   NewBooking,
 } from './bookings.types';
@@ -51,6 +53,15 @@ export class BookingsService {
       firstBookableDate,
       bookedNights: nights.map((night) => night._id),
     };
+  }
+
+  async findAll(): Promise<BookingResponse[]> {
+    const bookings = await this.bookingModel
+      .find()
+      .sort({ checkIn: 1, createdAt: 1 })
+      .lean<BookingRecord[]>()
+      .exec();
+    return bookings.map(toBookingResponse);
   }
 
   async create(booking: NewBooking): Promise<CreateBookingResponse> {

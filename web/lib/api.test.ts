@@ -9,7 +9,7 @@ import {
   signup,
   toApiError,
 } from './api';
-import { resetMockBookings } from './mock-bookings';
+import { listMockBookings, resetMockBookings } from './mock-bookings';
 
 const input = {
   name: 'Sam Lee',
@@ -204,17 +204,36 @@ describe('logout', () => {
 });
 
 describe('getBookings', () => {
-  afterEach(() => {
-    resetMockBookings();
+  it('gets every booking from the API', async () => {
+    const bookings = [
+      {
+        id: '6718f1d3a1b2c3d4e5f60719',
+        bookingNumber: 'K7Q2MX',
+        guestName: 'Ana Lopez',
+        guestEmail: 'ana@example.com',
+        guestPhone: '5550100123',
+        checkIn: '2026-10-27',
+        checkOut: '2026-10-29',
+        status: 'active',
+        createdAt: '2026-10-24T19:30:00.000Z',
+        cancelledAt: null,
+      },
+    ];
+    mockFetch(200, bookings);
+
+    await expect(getBookings()).resolves.toEqual(bookings);
+    expect(global.fetch).toHaveBeenCalledWith('/api/bookings', {
+      method: 'GET',
+      headers: { 'Content-Type': 'application/json' },
+    });
   });
 
-  it('returns the mock bookings without calling the API', async () => {
-    global.fetch = jest.fn();
+  it('throws a 401 ApiError when not logged in', async () => {
+    mockFetch(401, { statusCode: 401, message: 'Unauthorized' });
 
-    const bookings = await getBookings();
-
-    expect(bookings.length).toBeGreaterThan(0);
-    expect(global.fetch).not.toHaveBeenCalled();
+    await expect(getBookings()).rejects.toEqual(
+      new ApiError(401, ['Unauthorized']),
+    );
   });
 });
 
@@ -224,7 +243,7 @@ describe('cancelBooking', () => {
   });
 
   it('returns the cancelled booking', async () => {
-    const [first] = await getBookings();
+    const [first] = listMockBookings();
 
     await expect(cancelBooking(first.id)).resolves.toMatchObject({
       id: first.id,
@@ -239,7 +258,7 @@ describe('cancelBooking', () => {
   });
 
   it('throws a 409 ApiError for a booking that is already cancelled', async () => {
-    const bookings = await getBookings();
+    const bookings = listMockBookings();
     const cancelled = bookings.find(
       (booking) => booking.status === 'cancelled',
     )!;
