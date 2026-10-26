@@ -21,7 +21,7 @@ NestJS REST API. All paths start with `/api` (the Next.js rewrite forwards them 
 All errors use the NestJS default shape:
 
 ```json
-{ "statusCode": 409, "message": "Those dates are no longer available", "error": "Conflict" }
+{ "statusCode": 409, "message": "Those dates are no longer available.", "error": "Conflict" }
 ```
 
 For `400` validation errors, `message` is a list of strings, one per problem.
@@ -79,7 +79,12 @@ All five fields are required.
 | Status | When |
 |---|---|
 | 400 | Missing or invalid data: any field missing or blank, bad email format, missing or invalid dates, check-in not after today, or check-out not after check-in. |
-| 409 | Any night of the stay is already booked. |
+| 409 | Any night of the stay is already booked. `message` is exactly `Those dates are no longer available.` |
+
+- `400` messages, one per problem: `Name is required.`, `Email must be a valid email address.`, `Phone number is required.`, `Check-in must be a date (YYYY-MM-DD).`, `Check-out must be a date (YYYY-MM-DD).`, `Check-in must be tomorrow or later.`, `Check-out must be after check-in.` Unknown fields also return `400`.
+- Dates must be real calendar dates in `YYYY-MM-DD` form (`2026-02-30` is rejected).
+- `bookingNumber` is 6 characters from `ABCDEFGHJKMNPQRSTUVWXYZ23456789` (no `0`, `1`, `I`, `L` or `O`, so it is easy to read aloud).
+- The booking and its nights are saved in one transaction, so two requests for the same night can never both succeed.
 
 ## POST /api/auth/signup
 
@@ -188,7 +193,7 @@ The "are you sure?" confirmation is front end only.
 ## Notes
 
 - No API versioning.
-- "Today" and "tomorrow" use the hotel's time zone.
+- "Today" and "tomorrow" use the hotel's time zone, `America/Los_Angeles` (`HOTEL_TIME_ZONE` in `api/src/common/constants.ts`).
 - No maximum stay length and no limit on how far ahead a guest can book.
 - Phone is stored as sent; the API only checks "not blank". The web app sends 10 digits with no formatting (e.g. `5550100123`) and formats them as `(555) 010-0123` for display.
 - No pagination on the bookings list.

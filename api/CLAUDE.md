@@ -62,7 +62,7 @@ Back end conventions.
 - Every service method has a unit test.
 - Every endpoint has an e2e test for success and each error status in the API contract.
 - E2e tests use `MongoMemoryReplSet` and clear the collections between tests.
-- Tests freeze "today" so date rules don't depend on the run date.
+- Tests freeze "today" so date rules don't depend on the run date: services read the time from the injected `CLOCK` (`src/common/clock.ts`), and tests replace it with a fixed `now` (`createTestApp({ now })` in e2e tests).
 
 ## General
 
