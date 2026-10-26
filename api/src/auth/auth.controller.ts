@@ -1,4 +1,11 @@
-import { Body, Controller, Post, Res } from '@nestjs/common';
+import {
+  Body,
+  Controller,
+  HttpCode,
+  HttpStatus,
+  Post,
+  Res,
+} from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import type { CookieOptions, Response } from 'express';
 import { TOKEN_COOKIE, TOKEN_COOKIE_MAX_AGE_MS } from './auth.constants';
@@ -19,8 +26,17 @@ export class AuthController {
     @Res({ passthrough: true }) response: Response,
   ): Promise<StaffResponse> {
     const { staff, token } = await this.authService.signup(dto);
-    response.cookie(TOKEN_COOKIE, token, this.cookieOptions());
+    response.cookie(TOKEN_COOKIE, token, {
+      ...this.cookieOptions(),
+      maxAge: TOKEN_COOKIE_MAX_AGE_MS,
+    });
     return staff;
+  }
+
+  @Post('logout')
+  @HttpCode(HttpStatus.NO_CONTENT)
+  logout(@Res({ passthrough: true }) response: Response): void {
+    response.clearCookie(TOKEN_COOKIE, this.cookieOptions());
   }
 
   private cookieOptions(): CookieOptions {
@@ -28,7 +44,6 @@ export class AuthController {
       httpOnly: true,
       secure: this.config.get<string>('NODE_ENV') === 'production',
       sameSite: 'lax',
-      maxAge: TOKEN_COOKIE_MAX_AGE_MS,
       path: '/',
     };
   }
