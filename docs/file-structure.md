@@ -189,8 +189,11 @@ api/
 ├── src/
 │   ├── main.ts
 │   ├── app.module.ts
+│   ├── app.setup.ts
 │   ├── auth/
 │   │   ├── auth.module.ts
+│   │   ├── auth.constants.ts
+│   │   ├── auth.types.ts
 │   │   ├── auth.controller.ts
 │   │   ├── auth.service.ts
 │   │   ├── auth.service.spec.ts
@@ -201,7 +204,9 @@ api/
 │   ├── staff/
 │   │   ├── staff.module.ts
 │   │   ├── staff.service.ts
-│   │   └── staff.schema.ts
+│   │   ├── staff.service.spec.ts
+│   │   ├── staff.schema.ts
+│   │   └── staff.types.ts
 │   ├── bookings/
 │   │   ├── bookings.module.ts
 │   │   ├── bookings.controller.ts
@@ -214,11 +219,21 @@ api/
 │   │   └── dto/
 │   │       └── create-booking.dto.ts
 │   └── common/
+│       ├── constants.ts
 │       ├── dates.ts
-│       └── dates.spec.ts
+│       ├── dates.spec.ts
+│       ├── email.ts
+│       ├── email.spec.ts
+│       ├── mongo-errors.ts
+│       ├── mongo-errors.spec.ts
+│       ├── transforms.ts
+│       └── transforms.spec.ts
 ├── test/
+│   ├── app.e2e.ts
 │   ├── auth.e2e-spec.ts
 │   ├── bookings.e2e-spec.ts
+│   ├── global-setup.ts
+│   ├── global-teardown.ts
 │   └── jest-e2e.json
 ├── nest-cli.json
 ├── eslint.config.mjs
@@ -256,7 +271,8 @@ Unit tests (`*.spec.ts`) sit next to the file they test. End-to-end tests live i
 
 ### Back end
 
-- `main.ts` sets the global `/api` prefix, `cookie-parser` and the global `ValidationPipe`.
+- `app.setup.ts` (`configureApp`) sets the global `/api` prefix, `cookie-parser` and the global `ValidationPipe` (`whitelist`, `forbidNonWhitelisted`, `transform`, `stopAtFirstError`). `main.ts` and the e2e tests both call it, so tests run the same app.
+- E2e tests start one `MongoMemoryReplSet` in `test/global-setup.ts`, which sets `MONGODB_URI` and `JWT_SECRET` before the app loads (so a local `.env` is never used), and build the app with `createTestApp()` from `test/app.e2e.ts`.
 - `app.module.ts` loads `@nestjs/config` and connects Mongoose with `MONGODB_URI`.
 - `auth.guard.ts` reads the `token` cookie and guards the two staff-only booking endpoints.
 - `staff/` has no controller; only `auth/` uses it.

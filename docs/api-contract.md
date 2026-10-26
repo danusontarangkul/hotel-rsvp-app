@@ -90,7 +90,8 @@ User Story 3.
 { "name": "Sam Lee", "email": "sam@hotel.com", "password": "at-least-8" }
 ```
 
-- `name`: required. `email`: valid format, stored lowercase. `password`: at least 8 characters.
+- `name`: required, trimmed. `email`: valid format, trimmed and stored lowercase. `password`: at least 8 characters.
+- `400` messages (one per broken field, in this order): `Name is required.`, `Email must be a valid email address.`, `Password must be at least 8 characters.` An unknown field also returns `400`.
 
 **Response `201`**, sets the login cookie (signed up = logged in)
 ```json
