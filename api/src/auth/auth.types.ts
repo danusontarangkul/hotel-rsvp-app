@@ -1,7 +1,13 @@
+import type { Request } from 'express';
+
 export type StaffResponse = {
   id: string;
   name: string;
   email: string;
+};
+
+export type AuthenticatedRequest = Request & {
+  staffId: string;
 };
 
 export type JwtPayload = {

@@ -2,15 +2,18 @@ import {
   BadRequestException,
   ConflictException,
   InternalServerErrorException,
+  NotFoundException,
 } from '@nestjs/common';
 import { getModelToken, MongooseModule } from '@nestjs/mongoose';
 import { Test, type TestingModule } from '@nestjs/testing';
 import { MongoMemoryReplSet } from 'mongodb-memory-server';
-import type { Model } from 'mongoose';
+import { Types, type Model } from 'mongoose';
 import { CLOCK, type Clock } from '../common/clock';
 import { generateBookingNumber } from './booking-number';
 import { Booking, BookingSchema } from './booking.schema';
 import {
+  BOOKING_ALREADY_CANCELLED,
+  BOOKING_NOT_FOUND,
   CHECK_IN_TOO_EARLY,
   CHECK_OUT_NOT_AFTER_CHECK_IN,
   DATES_TAKEN,
@@ -30,6 +33,7 @@ const { generateBookingNumber: realGenerateBookingNumber } =
 
 const DATABASE_TIMEOUT_MS = 60_000;
 const NOON_IN_LOS_ANGELES_ON_OCTOBER_25 = new Date('2026-10-25T19:00:00.000Z');
+const STAFF_ID = '6718f0c2a1b2c3d4e5f60718';
 
 const stay: NewBooking = {
   guestName: 'Maya Chen',
@@ -230,6 +234,97 @@ describe('BookingsService', () => {
       await expect(service.findAll()).resolves.toMatchObject([
         { status: 'cancelled', cancelledAt: '2026-10-25T20:00:00.000Z' },
       ]);
+    });
+  });
+
+  describe('cancel', () => {
+    async function bookedId(booking: NewBooking = stay): Promise<string> {
+      const { bookingNumber } = await service.create(booking);
+      return (await savedBooking(bookingNumber))._id.toString();
+    }
+
+    it('returns the booking as cancelled, with the time it was cancelled', async () => {
+      const id = await bookedId();
+
+      await expect(service.cancel(id, STAFF_ID)).resolves.toMatchObject({
+        id,
+        status: 'cancelled',
+        cancelledAt: NOON_IN_LOS_ANGELES_ON_OCTOBER_25.toISOString(),
+        checkIn: '2026-11-08',
+        checkOut: '2026-11-11',
+      });
+    });
+
+    it('saves who cancelled the booking and keeps the booking', async () => {
+      const id = await bookedId();
+
+      await service.cancel(id, STAFF_ID);
+
+      const saved = await bookingModel.findById(id).lean<BookingRecord>();
+      expect(saved).toMatchObject({
+        status: 'cancelled',
+        cancelledAt: NOON_IN_LOS_ANGELES_ON_OCTOBER_25,
+        cancelledBy: new Types.ObjectId(STAFF_ID),
+      });
+    });
+
+    it('frees the booking’s nights so the dates can be booked again', async () => {
+      const id = await bookedId();
+
+      await service.cancel(id, STAFF_ID);
+
+      expect(await bookedNightIds()).toEqual([]);
+      await expect(service.create(stay)).resolves.toMatchObject({
+        checkIn: '2026-11-08',
+      });
+    });
+
+    it('leaves the nights of other bookings alone', async () => {
+      const id = await bookedId();
+      await bookedId({
+        ...stay,
+        checkIn: '2026-11-20',
+        checkOut: '2026-11-22',
+      });
+
+      await service.cancel(id, STAFF_ID);
+
+      expect(await bookedNightIds()).toEqual(['2026-11-20', '2026-11-21']);
+    });
+
+    it('rejects a booking that is already cancelled', async () => {
+      const id = await bookedId();
+      await service.cancel(id, STAFF_ID);
+
+      await expect(service.cancel(id, STAFF_ID)).rejects.toEqual(
+        new ConflictException(BOOKING_ALREADY_CANCELLED),
+      );
+    });
+
+    it('lets only one of two cancels at the same time succeed', async () => {
+      const id = await bookedId();
+
+      const results = await Promise.allSettled([
+        service.cancel(id, STAFF_ID),
+        service.cancel(id, STAFF_ID),
+      ]);
+
+      expect(results.map((result) => result.status).sort()).toEqual([
+        'fulfilled',
+        'rejected',
+      ]);
+    });
+
+    it('rejects an id with no booking', async () => {
+      await expect(
+        service.cancel(new Types.ObjectId().toString(), STAFF_ID),
+      ).rejects.toEqual(new NotFoundException(BOOKING_NOT_FOUND));
+    });
+
+    it('rejects an id that is not a valid id', async () => {
+      await expect(service.cancel('not-an-id', STAFF_ID)).rejects.toEqual(
+        new NotFoundException(BOOKING_NOT_FOUND),
+      );
     });
   });
 

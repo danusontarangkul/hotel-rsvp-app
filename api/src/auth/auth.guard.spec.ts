@@ -5,13 +5,18 @@ import { TOKEN_COOKIE } from './auth.constants';
 
 const SECRET = 'test-secret';
 
-function contextWithCookies(
-  cookies?: Record<string, string>,
-): ExecutionContext {
-  const request = { cookies };
+type FakeRequest = { cookies?: Record<string, string>; staffId?: string };
+
+function contextFor(request: FakeRequest): ExecutionContext {
   return {
     switchToHttp: () => ({ getRequest: () => request }),
   } as unknown as ExecutionContext;
+}
+
+function contextWithCookies(
+  cookies?: Record<string, string>,
+): ExecutionContext {
+  return contextFor({ cookies });
 }
 
 describe('AuthGuard', () => {
@@ -24,6 +29,15 @@ describe('AuthGuard', () => {
     await expect(
       guard.canActivate(contextWithCookies({ [TOKEN_COOKIE]: token })),
     ).resolves.toBe(true);
+  });
+
+  it('puts the logged-in staff id on the request', async () => {
+    const token = await jwtService.signAsync({ sub: 'staff-id' });
+    const request: FakeRequest = { cookies: { [TOKEN_COOKIE]: token } };
+
+    await guard.canActivate(contextFor(request));
+
+    expect(request.staffId).toBe('staff-id');
   });
 
   it('rejects a request with no cookies', async () => {

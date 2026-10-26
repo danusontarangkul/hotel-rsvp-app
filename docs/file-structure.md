@@ -144,8 +144,6 @@ web/
 │   ├── api.ts
 │   ├── api.test.ts
 │   ├── types.ts
-│   ├── mock-bookings.ts
-│   ├── mock-bookings.test.ts
 │   ├── form-errors.ts
 │   ├── form-errors.test.ts
 │   ├── phone.ts
@@ -211,6 +209,8 @@ api/
 │   │   ├── auth.service.spec.ts
 │   │   ├── auth.guard.ts
 │   │   ├── auth.guard.spec.ts
+│   │   ├── current-staff-id.decorator.ts
+│   │   ├── current-staff-id.decorator.spec.ts
 │   │   └── dto/
 │   │       ├── signup.dto.ts
 │   │       └── login.dto.ts
@@ -294,7 +294,7 @@ Unit tests (`*.spec.ts`) sit next to the file they test. End-to-end tests live i
 - `app.setup.ts` (`configureApp`) sets the global `/api` prefix, `cookie-parser` and the global `ValidationPipe` (`whitelist`, `forbidNonWhitelisted`, `transform`, `stopAtFirstError`). `main.ts` and the e2e tests both call it, so tests run the same app.
 - E2e tests start one `MongoMemoryReplSet` in `test/global-setup.ts`, which sets `MONGODB_URI` and `JWT_SECRET` before the app loads (so a local `.env` is never used), and build the app with `createTestApp()` from `test/app.e2e.ts`.
 - `app.module.ts` loads `@nestjs/config` and connects Mongoose with `MONGODB_URI`.
-- `auth.guard.ts` (`AuthGuard`) reads the `token` cookie, checks the JWT and returns `401` if it is missing or not valid. Staff-only routes add `@UseGuards(AuthGuard)`. `AuthModule` exports `JwtModule`, and `BookingsModule` imports `AuthModule` so the guard can use it.
+- `auth.guard.ts` (`AuthGuard`) reads the `token` cookie, checks the JWT and returns `401` if it is missing or not valid. It also puts the staff id from the token on the request, and `@CurrentStaffId()` (`current-staff-id.decorator.ts`) reads it in a route. Staff-only routes add `@UseGuards(AuthGuard)`. `AuthModule` exports `JwtModule`, and `BookingsModule` imports `AuthModule` so the guard can use it.
 - `booking-response.ts` (`toBookingResponse`) turns a saved booking into the API shape. Every endpoint that returns a booking uses it.
 - `staff/` has no controller; only `auth/` uses it.
 - Booking rules live in `bookings.service.ts`.

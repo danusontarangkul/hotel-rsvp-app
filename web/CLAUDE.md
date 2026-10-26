@@ -84,7 +84,7 @@ Link to a frame: `https://www.figma.com/design/y8tAJJMZDW2c5K0sspUj0D/Untitled?n
 ## Errors
 
 - Show errors with `components/shared/ErrorMessage.tsx`.
-- API errors show the response's `message`. For a `400`, show each message in the list.
+- API errors show the response's `message` only for the statuses whose message `docs/api-contract.md` says the page shows. Each function in `lib/api.ts` passes those statuses to `request`: `[400, 409]` for sign up and booking, `[400, 401]` for log in, `[409]` for cancel (its `404` is left out because an unknown route also returns `404`, and bookings are never deleted), and none for the GETs and log out. Any other status (a `500`, an unknown route's `404`, a network failure) shows `GENERIC_ERROR_MESSAGE` instead, so server internals never reach the screen. The `status` is always kept, so a `401` still redirects. For a `400`, show each message in the list.
 - Field errors show under the field.
 - Forms turn a hook's `error` into field and form errors with `toFormErrors(error, FIELDS, { status: field })` from `lib/form-errors.ts`. Don't write per-form error mapping.
 - A failed request leaves the form filled in.

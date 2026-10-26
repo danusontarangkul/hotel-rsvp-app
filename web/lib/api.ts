@@ -1,4 +1,3 @@
-import { cancelMockBooking } from './mock-bookings';
 import type {
   ApiErrorBody,
   Availability,
@@ -11,6 +10,11 @@ import type {
 } from './types';
 
 export const GENERIC_ERROR_MESSAGE = 'Something went wrong. Please try again.';
+
+const SIGNUP_ERROR_STATUSES = [400, 409] as const;
+const LOGIN_ERROR_STATUSES = [400, 401] as const;
+const CREATE_BOOKING_ERROR_STATUSES = [400, 409] as const;
+const CANCEL_BOOKING_ERROR_STATUSES = [409] as const;
 
 export class ApiError extends Error {
   readonly status: number;
@@ -25,9 +29,11 @@ export class ApiError extends Error {
 }
 
 export function toApiError(caught: unknown): ApiError {
-  return caught instanceof ApiError
-    ? caught
-    : new ApiError(0, [GENERIC_ERROR_MESSAGE]);
+  if (caught instanceof ApiError) {
+    return caught;
+  }
+  console.error('Request failed before a response arrived:', caught);
+  return new ApiError(0, [GENERIC_ERROR_MESSAGE]);
 }
 
 async function readErrorMessages(response: Response): Promise<string[]> {
@@ -45,39 +51,57 @@ async function readErrorMessages(response: Response): Promise<string[]> {
   return [GENERIC_ERROR_MESSAGE];
 }
 
-async function request<T>(path: string, init: RequestInit): Promise<T> {
+async function errorFor(
+  path: string,
+  response: Response,
+  shownStatuses: readonly number[],
+): Promise<ApiError> {
+  const messages = await readErrorMessages(response);
+  if (!shownStatuses.includes(response.status)) {
+    console.error(`API ${response.status} from ${path}:`, messages);
+    return new ApiError(response.status, [GENERIC_ERROR_MESSAGE]);
+  }
+  return new ApiError(response.status, messages);
+}
+
+async function send(
+  path: string,
+  init: RequestInit,
+  shownStatuses: readonly number[] = [],
+): Promise<Response> {
   const response = await fetch(path, {
     ...init,
     headers: { 'Content-Type': 'application/json', ...init.headers },
   });
   if (!response.ok) {
-    throw new ApiError(response.status, await readErrorMessages(response));
+    throw await errorFor(path, response, shownStatuses);
   }
+  return response;
+}
+
+async function request<T>(
+  path: string,
+  init: RequestInit,
+  shownStatuses: readonly number[] = [],
+): Promise<T> {
+  const response = await send(path, init, shownStatuses);
   return (await response.json()) as T;
 }
 
-async function send(path: string, init: RequestInit): Promise<void> {
-  const response = await fetch(path, {
-    ...init,
-    headers: { 'Content-Type': 'application/json', ...init.headers },
-  });
-  if (!response.ok) {
-    throw new ApiError(response.status, await readErrorMessages(response));
-  }
-}
-
 export function signup(input: SignupInput): Promise<Staff> {
-  return request<Staff>('/api/auth/signup', {
-    method: 'POST',
-    body: JSON.stringify(input),
-  });
+  return request<Staff>(
+    '/api/auth/signup',
+    { method: 'POST', body: JSON.stringify(input) },
+    SIGNUP_ERROR_STATUSES,
+  );
 }
 
 export function login(input: LoginInput): Promise<Staff> {
-  return request<Staff>('/api/auth/login', {
-    method: 'POST',
-    body: JSON.stringify(input),
-  });
+  return request<Staff>(
+    '/api/auth/login',
+    { method: 'POST', body: JSON.stringify(input) },
+    LOGIN_ERROR_STATUSES,
+  );
 }
 
 export function getAvailability(): Promise<Availability> {
@@ -87,14 +111,15 @@ export function getAvailability(): Promise<Availability> {
 export function createBooking(
   input: CreateBookingInput,
 ): Promise<BookingConfirmation> {
-  return request<BookingConfirmation>('/api/bookings', {
-    method: 'POST',
-    body: JSON.stringify(input),
-  });
+  return request<BookingConfirmation>(
+    '/api/bookings',
+    { method: 'POST', body: JSON.stringify(input) },
+    CREATE_BOOKING_ERROR_STATUSES,
+  );
 }
 
-export function logout(): Promise<void> {
-  return send('/api/auth/logout', { method: 'POST' });
+export async function logout(): Promise<void> {
+  await send('/api/auth/logout', { method: 'POST' });
 }
 
 export function getBookings(): Promise<Booking[]> {
@@ -102,12 +127,9 @@ export function getBookings(): Promise<Booking[]> {
 }
 
 export function cancelBooking(id: string): Promise<Booking> {
-  const result = cancelMockBooking(id);
-  if (result === 'not-found') {
-    return Promise.reject(new ApiError(404, ['Booking not found']));
-  }
-  if (result === 'already-cancelled') {
-    return Promise.reject(new ApiError(409, ['Booking is already cancelled']));
-  }
-  return Promise.resolve(result);
+  return request<Booking>(
+    `/api/bookings/${encodeURIComponent(id)}/cancel`,
+    { method: 'POST' },
+    CANCEL_BOOKING_ERROR_STATUSES,
+  );
 }

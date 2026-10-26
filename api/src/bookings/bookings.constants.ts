@@ -8,3 +8,5 @@ export const CHECK_OUT_INVALID = 'Check-out must be a date (YYYY-MM-DD).';
 export const CHECK_IN_TOO_EARLY = 'Check-in must be tomorrow or later.';
 export const CHECK_OUT_NOT_AFTER_CHECK_IN = 'Check-out must be after check-in.';
 export const DATES_TAKEN = 'Those dates are no longer available.';
+export const BOOKING_NOT_FOUND = 'Booking not found.';
+export const BOOKING_ALREADY_CANCELLED = 'Booking is already cancelled.';
