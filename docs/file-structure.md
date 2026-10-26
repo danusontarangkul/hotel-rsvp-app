@@ -213,12 +213,16 @@ api/
 │   │   ├── availability.controller.ts
 │   │   ├── bookings.service.ts
 │   │   ├── bookings.service.spec.ts
+│   │   ├── bookings.constants.ts
+│   │   ├── bookings.types.ts
 │   │   ├── booking.schema.ts
 │   │   ├── night.schema.ts
 │   │   ├── booking-number.ts
+│   │   ├── booking-number.spec.ts
 │   │   └── dto/
 │   │       └── create-booking.dto.ts
 │   └── common/
+│       ├── clock.ts
 │       ├── constants.ts
 │       ├── dates.ts
 │       ├── dates.spec.ts
@@ -277,4 +281,5 @@ Unit tests (`*.spec.ts`) sit next to the file they test. End-to-end tests live i
 - `auth.guard.ts` reads the `token` cookie and guards the two staff-only booking endpoints.
 - `staff/` has no controller; only `auth/` uses it.
 - Booking rules live in `bookings.service.ts`.
+- "Now" comes from the injected `CLOCK` provider (`common/clock.ts`), never `new Date()` in a service. Tests replace it with a fixed time: unit tests provide their own `CLOCK`, and e2e tests call `createTestApp({ now })`.
 - No shared types package; `web/lib/types.ts` repeats the API response shapes.

@@ -1,12 +1,8 @@
 import { Transform } from 'class-transformer';
 import { IsEmail, IsNotEmpty, IsString, MinLength } from 'class-validator';
+import { EMAIL_INVALID, NAME_REQUIRED } from '../../common/constants';
 import { trimString } from '../../common/transforms';
-import {
-  EMAIL_INVALID,
-  MIN_PASSWORD_LENGTH,
-  NAME_REQUIRED,
-  PASSWORD_TOO_SHORT,
-} from '../auth.constants';
+import { MIN_PASSWORD_LENGTH, PASSWORD_TOO_SHORT } from '../auth.constants';
 
 export class SignupDto {
   @Transform(trimString)
