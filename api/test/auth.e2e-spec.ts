@@ -145,3 +145,55 @@ describe('POST /api/auth/signup', () => {
     expect(response.get('Set-Cookie')).toBeUndefined();
   });
 });
+
+describe('POST /api/auth/logout', () => {
+  let app: INestApplication<App>;
+  let clearDatabase: () => Promise<void>;
+
+  beforeAll(async () => {
+    ({ app, clearDatabase } = await createTestApp());
+  });
+
+  afterEach(async () => {
+    await clearDatabase();
+  });
+
+  afterAll(async () => {
+    await app.close();
+  });
+
+  function logout(cookie?: string) {
+    const call = request(app.getHttpServer()).post('/api/auth/logout');
+    return cookie ? call.set('Cookie', cookie) : call;
+  }
+
+  it('returns 204 with no body', async () => {
+    const response = await logout().expect(204);
+
+    expect(response.text).toBe('');
+  });
+
+  it('clears the token cookie with the same settings it was set with', async () => {
+    const signedUp = await request(app.getHttpServer())
+      .post('/api/auth/signup')
+      .send(validSignup)
+      .expect(201);
+    const [loginCookie] = signedUp.get('Set-Cookie') ?? [];
+
+    const response = await logout(loginCookie.split(';')[0]).expect(204);
+
+    const [cookie] = response.get('Set-Cookie') ?? [];
+    expect(cookie).toMatch(/^token=;/);
+    expect(cookie).toContain('Expires=Thu, 01 Jan 1970 00:00:00 GMT');
+    expect(cookie).toContain('Path=/');
+    expect(cookie).toContain('HttpOnly');
+    expect(cookie).toContain('SameSite=Lax');
+  });
+
+  it('works when not logged in', async () => {
+    const response = await logout().expect(204);
+
+    const [cookie] = response.get('Set-Cookie') ?? [];
+    expect(cookie).toMatch(/^token=;/);
+  });
+});
