@@ -40,8 +40,8 @@ Logged-in staff see every booking, active and cancelled, with the guest's contac
 10. Claude rules (CLAUDE.md)
 11. Code
 12. Testing
-    - Automated: unit tests for both apps and end-to-end tests for the API, run by CI on every push
-    - Manual: [manual test checklist](docs/manual-tests.md) for every functional requirement, including error cases
+    - Automated
+    - Manual
 
 ## How I Used AI
 
