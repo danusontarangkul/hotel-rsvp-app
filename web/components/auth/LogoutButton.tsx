@@ -5,13 +5,18 @@ import Button from '@/components/shared/Button';
 import { LogOutIcon } from '@/components/shared/icons';
 import { useLogout } from '@/hooks/useLogout';
 
-export default function LogoutButton() {
+type LogoutButtonProps = {
+  onLoggedOut?: () => void;
+};
+
+export default function LogoutButton({ onLoggedOut }: LogoutButtonProps) {
   const router = useRouter();
   const { run, loading } = useLogout();
 
   async function handleClick() {
     await run();
-    router.push('/staff/login');
+    onLoggedOut?.();
+    router.push('/');
   }
 
   return (

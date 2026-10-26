@@ -15,9 +15,13 @@ import {
   TIMING_SAFE_PASSWORD_HASH,
   WRONG_CREDENTIALS,
 } from './auth.constants';
-import type { AuthResult, JwtPayload } from './auth.types';
+import type { AuthResult, JwtPayload, StaffResponse } from './auth.types';
 import type { LoginDto } from './dto/login.dto';
 import type { SignupDto } from './dto/signup.dto';
+
+function toStaffResponse(staff: StaffRecord): StaffResponse {
+  return { id: staff._id.toString(), name: staff.name, email: staff.email };
+}
 
 @Injectable()
 export class AuthService {
@@ -50,6 +54,14 @@ export class AuthService {
     return this.toAuthResult(staff);
   }
 
+  async me(staffId: string): Promise<StaffResponse> {
+    const staff = await this.staffService.findById(staffId);
+    if (!staff) {
+      throw new UnauthorizedException();
+    }
+    return toStaffResponse(staff);
+  }
+
   private async createStaff(
     name: string,
     email: string,
@@ -66,10 +78,10 @@ export class AuthService {
   }
 
   private async toAuthResult(staff: StaffRecord): Promise<AuthResult> {
-    const id = staff._id.toString();
+    const response = toStaffResponse(staff);
     return {
-      staff: { id, name: staff.name, email: staff.email },
-      token: await this.jwtService.signAsync<JwtPayload>({ sub: id }),
+      staff: response,
+      token: await this.jwtService.signAsync<JwtPayload>({ sub: response.id }),
     };
   }
 }

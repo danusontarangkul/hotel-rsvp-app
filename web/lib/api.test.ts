@@ -5,6 +5,7 @@ import {
   createBooking,
   getAvailability,
   getBookings,
+  getCurrentStaff,
   login,
   logout,
   signup,
@@ -199,6 +200,34 @@ describe('toApiError', () => {
     expect(consoleError).toHaveBeenCalledWith(
       'Request failed before a response arrived:',
       networkError,
+    );
+  });
+});
+
+describe('getCurrentStaff', () => {
+  it('gets the logged-in staff member from the API', async () => {
+    const staff = { id: '1', name: 'Sam Lee', email: 'sam@hotel.com' };
+    mockFetch(200, staff);
+
+    await expect(getCurrentStaff()).resolves.toEqual(staff);
+    expect(global.fetch).toHaveBeenCalledWith('/api/auth/me', {
+      method: 'GET',
+      headers: { 'Content-Type': 'application/json' },
+    });
+  });
+
+  it('gives null without logging when nobody is logged in', async () => {
+    mockFetch(401, { statusCode: 401, message: 'Unauthorized' });
+
+    await expect(getCurrentStaff()).resolves.toBeNull();
+    expect(consoleError).not.toHaveBeenCalled();
+  });
+
+  it('throws the generic message for any other error', async () => {
+    mockFetch(500, { statusCode: 500, message: 'Internal server error' });
+
+    await expect(getCurrentStaff()).rejects.toEqual(
+      new ApiError(500, [GENERIC_ERROR_MESSAGE]),
     );
   });
 });

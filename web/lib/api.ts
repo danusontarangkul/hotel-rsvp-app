@@ -15,6 +15,7 @@ const SIGNUP_ERROR_STATUSES = [400, 409] as const;
 const LOGIN_ERROR_STATUSES = [400, 401] as const;
 const CREATE_BOOKING_ERROR_STATUSES = [400, 409] as const;
 const CANCEL_BOOKING_ERROR_STATUSES = [409] as const;
+const CURRENT_STAFF_ERROR_STATUSES = [401] as const;
 
 export class ApiError extends Error {
   readonly status: number;
@@ -116,6 +117,21 @@ export function createBooking(
     { method: 'POST', body: JSON.stringify(input) },
     CREATE_BOOKING_ERROR_STATUSES,
   );
+}
+
+export async function getCurrentStaff(): Promise<Staff | null> {
+  try {
+    return await request<Staff>(
+      '/api/auth/me',
+      { method: 'GET' },
+      CURRENT_STAFF_ERROR_STATUSES,
+    );
+  } catch (error) {
+    if (error instanceof ApiError && error.status === 401) {
+      return null;
+    }
+    throw error;
+  }
 }
 
 export async function logout(): Promise<void> {

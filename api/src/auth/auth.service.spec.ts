@@ -31,6 +31,7 @@ describe('AuthService', () => {
   let service: AuthService;
   const staffService = {
     findByEmail: jest.fn<Promise<StaffRecord | null>, [string]>(),
+    findById: jest.fn<Promise<StaffRecord | null>, [string]>(),
     create: jest.fn<Promise<StaffRecord>, [NewStaff]>(),
   };
   const jwtService = {
@@ -190,6 +191,35 @@ describe('AuthService', () => {
 
     it('checks unknown emails against a stand-in hash with the same cost', () => {
       expect(bcrypt.getRounds(TIMING_SAFE_PASSWORD_HASH)).toBe(BCRYPT_COST);
+    });
+  });
+
+  describe('me', () => {
+    it('returns the logged-in staff member without the password hash', async () => {
+      staffService.findById.mockResolvedValue(
+        staffRecord({
+          name: 'Sam Lee',
+          email: 'sam@hotel.com',
+          passwordHash: 'hash',
+        }),
+      );
+
+      await expect(service.me('6718f0c2a1b2c3d4e5f60718')).resolves.toEqual({
+        id: '6718f0c2a1b2c3d4e5f60718',
+        name: 'Sam Lee',
+        email: 'sam@hotel.com',
+      });
+      expect(staffService.findById).toHaveBeenCalledWith(
+        '6718f0c2a1b2c3d4e5f60718',
+      );
+    });
+
+    it('rejects a staff member that no longer exists', async () => {
+      staffService.findById.mockResolvedValue(null);
+
+      await expect(service.me('6718f0c2a1b2c3d4e5f60718')).rejects.toEqual(
+        new UnauthorizedException(),
+      );
     });
   });
 });

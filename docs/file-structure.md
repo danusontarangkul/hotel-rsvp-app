@@ -54,7 +54,11 @@ web/
 │   │   ├── LoginForm.tsx
 │   │   ├── LoginForm.test.tsx
 │   │   ├── LogoutButton.tsx
-│   │   └── LogoutButton.test.tsx
+│   │   ├── LogoutButton.test.tsx
+│   │   ├── HomeHeaderActions.tsx
+│   │   ├── HomeHeaderActions.test.tsx
+│   │   ├── HomeHeaderActionsSkeleton.tsx
+│   │   └── HomeHeaderActionsSkeleton.test.tsx
 │   ├── staff/
 │   │   ├── BookingsSection.tsx
 │   │   ├── BookingsSection.test.tsx
@@ -128,6 +132,8 @@ web/
 │   ├── useAvailability.test.ts
 │   ├── useBookings.ts
 │   ├── useBookings.test.ts
+│   ├── useCurrentStaff.ts
+│   ├── useCurrentStaff.test.ts
 │   ├── useSignup.ts
 │   ├── useSignup.test.ts
 │   ├── useLogin.ts
@@ -168,7 +174,7 @@ Tests (`*.test.tsx`, `*.test.ts`) sit next to the file they test and run with Je
 | Folder | Used by |
 |---|---|
 | `booking/` | `/` (User Story 1, User Story 2) |
-| `auth/` | `/staff/signup`, `/staff/login`, log out on `/staff/bookings` (User Story 3, User Story 4) |
+| `auth/` | `/staff/signup`, `/staff/login`, log out on `/staff/bookings` and `/` (User Story 3, User Story 4) |
 | `staff/` | `/staff/bookings` (User Story 5, User Story 6) |
 | `shared/` | Any page. Only generic pieces with no booking or staff logic. |
 
@@ -176,7 +182,7 @@ Tests (`*.test.tsx`, `*.test.ts`) sit next to the file they test and run with Je
 
 | URL | Who | User Story | API calls |
 |---|---|---|---|
-| `/` | Guest | User Story 1, User Story 2 | GET `/api/availability`, POST `/api/bookings` |
+| `/` | Guest | User Story 1, User Story 2 | GET `/api/availability`, POST `/api/bookings`, GET `/api/auth/me`, POST `/api/auth/logout` |
 | `/staff/signup` | Staff | User Story 3 | POST `/api/auth/signup` |
 | `/staff/login` | Staff | User Story 4 | POST `/api/auth/login` |
 | `/staff/bookings` | Staff (logged in) | User Story 4, 5, 6 | GET `/api/bookings`, POST `/api/bookings/:id/cancel`, POST `/api/auth/logout` |
@@ -188,7 +194,7 @@ Tests (`*.test.tsx`, `*.test.ts`) sit next to the file they test and run with Je
 - `/staff/bookings` → "Cancel booking" on a row → "Cancel this booking?" modal → "Cancel booking" → the list reloads and the row shows as cancelled. "Keep booking", ×, Escape or a click outside closes the modal and changes nothing.
 - `/staff/signup` or `/staff/login` → success → `/staff/bookings`
 - `/staff/bookings` → `401` from the API → `/staff/login`
-- Log out → `/staff/login`
+- Log out → `/`
 
 ## Back end: api/
 
@@ -267,7 +273,7 @@ Unit tests (`*.spec.ts`) sit next to the file they test. End-to-end tests live i
 
 | Module | Endpoints | Collections | User Story |
 |---|---|---|---|
-| `auth/` | POST `/api/auth/signup`, `/login`, `/logout` | via `staff/` | User Story 3, User Story 4 |
+| `auth/` | POST `/api/auth/signup`, `/login`, `/logout`; GET `/api/auth/me` | via `staff/` | User Story 3, User Story 4 |
 | `staff/` | None | staff | User Story 3, User Story 4 |
 | `bookings/` | GET `/api/availability`, POST `/api/bookings`, GET `/api/bookings`, POST `/api/bookings/:id/cancel` | bookings, nights | User Story 1, 2, 5, 6 |
 | `common/` | None | None | Hotel time zone "today/tomorrow" and nights-between-dates helpers |
@@ -283,8 +289,8 @@ Unit tests (`*.spec.ts`) sit next to the file they test. End-to-end tests live i
 - All data is fetched in client components with relative `/api/...` URLs.
 - The booking form is a side panel next to the calendar (stacked under it on small screens), not a modal. `BookingSection` holds the selected dates and the booking request. The confirmation and the "no longer available" message are shown in `BookingModal`.
 - Modals are React state on the page, not routes. `shared/Modal.tsx` is the base modal for `BookingModal` and `CancelBookingModal`.
-- `shared/SiteHeader.tsx` is added per page, not in `layout.tsx`. On `/` it has a "Staff log in" link; on `/staff/bookings` it has a "Bookings" `NavLink` and the `LogoutButton`. Sign up and log in have no header. No footer. No `/staff` index page. No separate staff layout.
-- Log out always goes to `/staff/login`, even if the request fails.
+- `shared/SiteHeader.tsx` is added per page, not in `layout.tsx`. On `/` it has `HomeHeaderActions`: a skeleton while `GET /api/auth/me` loads, then the `LogoutButton` if staff are logged in, otherwise a "Staff log in" link (also if the check fails); on `/staff/bookings` it has a "Bookings" `NavLink` and the `LogoutButton`. Sign up and log in have no header. No footer. No `/staff` index page. No separate staff layout.
+- Log out always goes to `/`, even if the request fails. On `/` itself, `HomeHeaderActions` passes `onLoggedOut={refetch}` so the header re-checks `GET /api/auth/me` and switches back to "Staff log in".
 - Staff pages call `useRedirectOnUnauthorized(...errors)` so a `401` from any of their requests goes to `/staff/login`. Forms that expect a `401` (log in) don't use it.
 - Tables use `shared/Table.tsx`, `shared/TableRow.tsx` and `shared/TableCell.tsx`. On screens narrower than `lg` each row shows as a card: the header row is hidden and each `TableCell` shows its `label`. Nothing scrolls sideways.
 - No `loading.tsx`, `error.tsx` or middleware.

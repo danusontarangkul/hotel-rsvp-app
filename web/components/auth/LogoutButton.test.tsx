@@ -21,23 +21,33 @@ afterEach(() => {
 });
 
 describe('LogoutButton', () => {
-  it('logs out and goes to the log in page', async () => {
+  it('logs out and goes to the home page', async () => {
     mockLogout.mockResolvedValue(undefined);
     render(<LogoutButton />);
 
     await userEvent.click(screen.getByRole('button', { name: 'Log out' }));
 
     expect(mockLogout).toHaveBeenCalledTimes(1);
-    expect(push).toHaveBeenCalledWith('/staff/login');
+    expect(push).toHaveBeenCalledWith('/');
   });
 
-  it('still goes to the log in page when the request fails', async () => {
+  it('still goes to the home page when the request fails', async () => {
     mockLogout.mockRejectedValue(new ApiError(500, ['Server down']));
     render(<LogoutButton />);
 
     await userEvent.click(screen.getByRole('button', { name: 'Log out' }));
 
-    expect(push).toHaveBeenCalledWith('/staff/login');
+    expect(push).toHaveBeenCalledWith('/');
+  });
+
+  it('tells its parent once logged out', async () => {
+    mockLogout.mockResolvedValue(undefined);
+    const onLoggedOut = jest.fn();
+    render(<LogoutButton onLoggedOut={onLoggedOut} />);
+
+    await userEvent.click(screen.getByRole('button', { name: 'Log out' }));
+
+    expect(onLoggedOut).toHaveBeenCalledTimes(1);
   });
 
   it('shows a disabled loading button while logging out', async () => {

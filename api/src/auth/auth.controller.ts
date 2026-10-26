@@ -1,16 +1,20 @@
 import {
   Body,
   Controller,
+  Get,
   HttpCode,
   HttpStatus,
   Post,
   Res,
+  UseGuards,
 } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import type { CookieOptions, Response } from 'express';
 import { TOKEN_COOKIE, TOKEN_COOKIE_MAX_AGE_MS } from './auth.constants';
+import { AuthGuard } from './auth.guard';
 import { AuthService } from './auth.service';
 import type { StaffResponse } from './auth.types';
+import { CurrentStaffId } from './current-staff-id.decorator';
 import { LoginDto } from './dto/login.dto';
 import { SignupDto } from './dto/signup.dto';
 
@@ -40,6 +44,12 @@ export class AuthController {
     const { staff, token } = await this.authService.login(dto);
     this.setTokenCookie(response, token);
     return staff;
+  }
+
+  @Get('me')
+  @UseGuards(AuthGuard)
+  me(@CurrentStaffId() staffId: string): Promise<StaffResponse> {
+    return this.authService.me(staffId);
   }
 
   @Post('logout')
