@@ -19,6 +19,20 @@ A small weekend build for a single hotel with one room. Small scale; not for rea
 6. Sees all bookings, including cancelled ones: guest name, contact, check-in, check-out, booking number, status.
 7. Cancels a booking, which makes those dates available again. Only staff can cancel.
 
+### Chat assistant: Guest
+8. Asks booking questions (check-in and check-out rules, earliest date, same-day turnover) and gets answers from a fixed FAQ.
+9. Asks which nights are available and gets answers from live availability.
+10. Books through the chat by giving dates, name, phone and email. The chat confirms the details first, then shows a booking number.
+
+### Chat assistant: Hotel Staff
+11. Uses the same FAQ and availability answers as guests.
+12. Cancels a booking by booking number after confirming. Only logged-in staff can cancel.
+
+### Chat assistant rules
+- Booking and cancelling through the chat follow the same rules as the existing form and button.
+- Staff access comes from the login cookie, never from what someone types in the chat.
+- The chat tells the user when it can't answer a question.
+
 ### Booking rules
 - There is one room. No two bookings can share a night.
 - Same-day turnover is allowed: a guest can check in on the day the previous guest checks out (a Mon to Wed stay can be followed by a Wed check-in).
