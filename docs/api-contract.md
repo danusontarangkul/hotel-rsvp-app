@@ -256,7 +256,7 @@ The model answers by calling these tools. The server decides which tools it gets
 | `get_bookings` | Staff | Not yet | Same as GET `/api/bookings` |
 
 - `get_availability` with `checkIn` returns `{ firstBookableDate, bookedNights, stay }`. Without `checkOut` it checks one night (`checkOut` is the next day).
-- `stay` always has `checkIn` and `checkOut` written out for people, like `Friday, November 20, 2026`, so the model can copy them. It also has `"available": true`, or `"available": false` with a `reason`: `Check-in must be tomorrow or later.`, `Check-out must be after check-in.` or `Some nights in this stay are already booked.` (then with `bookedNightsInStay`). Checking out on a booked night is allowed.
+- `stay` always has a `summary`, one finished sentence the model starts its reply with, like `The night of Friday, November 20, 2026 is already booked.` The sentence templates are in `chat.constants.ts`. `stay` also has `checkIn` and `checkOut` written out for people, like `Friday, November 20, 2026`. It also has `"available": true`, or `"available": false` with a `reason`: `Check-in must be tomorrow or later.`, `Check-out must be after check-in.` or `Some nights in this stay are already booked.` (then with `bookedNightsInStay`). Checking out on a booked night is allowed.
 - `get_availability` with only `checkOut`, or a date that isn't a real `YYYY-MM-DD` date, returns `{ "error": "..." }` to the model with `TOOL_DATES_INVALID` from `chat.constants.ts`, which tells the model to work out the date itself and call again.
 - An unknown tool name returns `{ "error": "Unknown tool." }` to the model.
 - The model can call tools up to 3 times per message. After that it must answer without tools.
