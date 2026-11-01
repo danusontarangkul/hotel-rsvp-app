@@ -4,6 +4,8 @@ import { Test } from '@nestjs/testing';
 import type { Connection } from 'mongoose';
 import { AppModule } from '../src/app.module';
 import { configureApp } from '../src/app.setup';
+import { CHAT_MODEL } from '../src/chat/chat.constants';
+import type { ChatModel } from '../src/chat/chat.types';
 import { CLOCK, type Clock } from '../src/common/clock';
 
 export type TestApp = {
@@ -13,6 +15,7 @@ export type TestApp = {
 
 export type TestAppOptions = {
   now?: Date;
+  chatModel?: ChatModel;
 };
 
 export async function createTestApp(
@@ -23,10 +26,13 @@ export async function createTestApp(
     throw new Error('e2e tests must run against the in-memory MongoDB');
   }
   const builder = Test.createTestingModule({ imports: [AppModule] });
-  const { now } = options;
+  const { now, chatModel } = options;
   if (now) {
     const fixedClock: Clock = { now: () => now };
     builder.overrideProvider(CLOCK).useValue(fixedClock);
+  }
+  if (chatModel) {
+    builder.overrideProvider(CHAT_MODEL).useValue(chatModel);
   }
   const moduleRef = await builder.compile();
   const app = moduleRef.createNestApplication();

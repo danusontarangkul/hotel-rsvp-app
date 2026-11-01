@@ -18,7 +18,9 @@
     "test:cov": "jest --coverage",
     "test:debug": "node --inspect-brk -r tsconfig-paths/register -r ts-node/register node_modules/.bin/jest --runInBand",
     "test:e2e": "NODE_OPTIONS=--experimental-vm-modules jest --config ./test/jest-e2e.json --passWithNoTests",
-    "dev": "nest start --watch"
+    "dev": "nest start --watch",
+    "ollama": "ollama serve",
+    "ollama:pull": "ollama pull qwen3:8b"
   },
   "dependencies": {
     "@nestjs/common": "^11.0.1",

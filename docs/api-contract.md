@@ -232,13 +232,15 @@ User Stories 7 to 11. Sends the conversation and returns the chat's next reply. 
 ```
 
 - `availabilityChanged` is `true` when this reply booked or cancelled a stay, so the web app reloads the calendar.
-- Until the model is connected, `reply` is always `Unfortunately, I cannot help with that.` and `availabilityChanged` is `false`.
+- `reply` is the model's answer with spaces trimmed from both ends. An empty answer becomes `Unfortunately, I cannot help with that.`
+- The model is told whether the user is a guest or staff (from the login cookie) and today's date in the hotel's time zone.
+- Until the booking tools are connected, `availabilityChanged` is always `false`.
 
 **Errors**
 | Status | When |
 |---|---|
 | 400 | `messages` missing or empty, a bad `role`, a blank `content`, a `user` message over 200 characters, or the last message isn't from `user`. Unknown fields also return `400`. |
-| 503 | Ollama is not running or doesn't respond. `message` is exactly `Chat is unavailable.` (Not returned until the model is connected.) |
+| 503 | Ollama is not running, or the model in `OLLAMA_MODEL` isn't pulled. `message` is exactly `Chat is unavailable.` |
 
 - `400` messages, one per problem (a problem in several messages is listed once): `Messages are required.`, `Role must be user or assistant.`, `Message content is required.`, `Message content must be at most 200 characters.`, `The last message must be from the user.`
 

@@ -52,6 +52,37 @@ describe('ChatPanel', () => {
     expect(onMinimize).toHaveBeenCalledTimes(1);
   });
 
+  it('shows the typing indicator after the messages while sending', () => {
+    render(
+      <ChatPanel
+        messages={MESSAGES}
+        onSend={jest.fn()}
+        onMinimize={jest.fn()}
+        sending
+      />,
+    );
+
+    const items = screen.getAllByRole('listitem');
+    expect(items).toHaveLength(3);
+    expect(items[2]).toContainElement(
+      screen.getByRole('status', { name: 'Assistant is typing' }),
+    );
+  });
+
+  it('hides the typing indicator when not sending', () => {
+    render(
+      <ChatPanel
+        messages={MESSAGES}
+        onSend={jest.fn()}
+        onMinimize={jest.fn()}
+      />,
+    );
+
+    expect(
+      screen.queryByRole('status', { name: 'Assistant is typing' }),
+    ).not.toBeInTheDocument();
+  });
+
   it('sends a typed message', async () => {
     const onSend = jest.fn();
     render(

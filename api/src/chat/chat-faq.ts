@@ -4,6 +4,7 @@ export const CHAT_FAQ = `
 - The hotel has one room.
 - The earliest check-in is tomorrow. Today and past dates can't be booked.
 - Check-out must be after check-in.
+- Check-in time is 3pm. Check-out time is 12pm (noon).
 - A guest can check in on the day the previous guest checks out.
 - There is no minimum or maximum stay.
 - To book, a guest gives their check-in and check-out dates, name, phone number and email.
