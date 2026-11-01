@@ -248,13 +248,18 @@ User Stories 7 to 11. Sends the conversation and returns the chat's next reply. 
 
 The model answers by calling these tools. The server decides which tools it gets, based on the login cookie only, never on the message history.
 
-| Tool | Who | Does |
-|---|---|---|
-| `get_availability` | Everyone | Same as GET `/api/availability` |
-| `create_booking` | Everyone | Same as POST `/api/bookings`, with the same rules and errors |
-| `cancel_booking` | Staff | Cancels by booking number, same rules and errors as POST `/api/bookings/:id/cancel` |
-| `get_bookings` | Staff | Same as GET `/api/bookings` |
+| Tool | Who | Status | Does |
+|---|---|---|---|
+| `get_availability` | Everyone | Connected | Same as GET `/api/availability`. With an optional `checkIn` (and optional `checkOut`) it also returns `stay`, using the booking rules (see below) |
+| `create_booking` | Everyone | Not yet | Same as POST `/api/bookings`, with the same rules and errors |
+| `cancel_booking` | Staff | Not yet | Cancels by booking number, same rules and errors as POST `/api/bookings/:id/cancel` |
+| `get_bookings` | Staff | Not yet | Same as GET `/api/bookings` |
 
+- `get_availability` with `checkIn` returns `{ firstBookableDate, bookedNights, stay }`. Without `checkOut` it checks one night (`checkOut` is the next day).
+- `stay` always has `checkIn` and `checkOut` written out for people, like `Friday, November 20, 2026`, so the model can copy them. It also has `"available": true`, or `"available": false` with a `reason`: `Check-in must be tomorrow or later.`, `Check-out must be after check-in.` or `Some nights in this stay are already booked.` (then with `bookedNightsInStay`). Checking out on a booked night is allowed.
+- `get_availability` with only `checkOut`, or a date that isn't a real `YYYY-MM-DD` date, returns `{ "error": "..." }` to the model with `TOOL_DATES_INVALID` from `chat.constants.ts`, which tells the model to work out the date itself and call again.
+- An unknown tool name returns `{ "error": "Unknown tool." }` to the model.
+- The model can call tools up to 3 times per message. After that it must answer without tools.
 - A tool error (for example `Those dates are no longer available.`) goes back to the model so it can explain it in the reply. It doesn't make the endpoint fail.
 - `cancel_booking` with an unknown booking number returns `Booking not found.` to the model.
 - The model is told to show the details and wait for the user to confirm before calling `create_booking` or `cancel_booking`.

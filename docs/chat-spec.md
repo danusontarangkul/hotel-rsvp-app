@@ -31,7 +31,7 @@ Every request is built from scratch. The model remembers nothing between request
 | Today's date | From `CLOCK`, in the hotel time zone, after `TODAY_PROMPT_PREFIX`, e.g. `Today is 2026-10-31.` |
 | FAQ | `CHAT_FAQ` in `api/src/chat/chat-faq.ts`, sent every time |
 | Messages | The last `MAX_CHAT_MESSAGES` (10) messages from the browser |
-| Tools | Guest: `get_availability`, `create_booking`. Staff: those plus `cancel_booking`, `get_bookings` |
+| Tools | Guest: `get_availability`, `create_booking`. Staff: those plus `cancel_booking`, `get_bookings`. Only `get_availability` is connected so far (`api/src/chat/chat-tools.ts`) |
 
 ## Limits
 

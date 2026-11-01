@@ -1,4 +1,46 @@
-import { addDays, nightsBetween, todayIn } from './dates';
+import {
+  addDays,
+  formatLongDate,
+  isCalendarDate,
+  nightsBetween,
+  todayIn,
+} from './dates';
+
+describe('formatLongDate', () => {
+  it('writes the weekday, month, day and year', () => {
+    expect(formatLongDate('2026-11-20')).toBe('Friday, November 20, 2026');
+  });
+
+  it('keeps the same day whatever the server time zone', () => {
+    expect(formatLongDate('2026-01-01')).toBe('Thursday, January 1, 2026');
+  });
+});
+
+describe('isCalendarDate', () => {
+  it('accepts a real date in YYYY-MM-DD form', () => {
+    expect(isCalendarDate('2026-11-08')).toBe(true);
+  });
+
+  it('accepts Feb 29 in a leap year', () => {
+    expect(isCalendarDate('2028-02-29')).toBe(true);
+  });
+
+  it('rejects a date that does not exist', () => {
+    expect(isCalendarDate('2026-02-30')).toBe(false);
+  });
+
+  it('rejects another format', () => {
+    expect(isCalendarDate('Nov 8 2026')).toBe(false);
+  });
+
+  it('rejects a date with a time', () => {
+    expect(isCalendarDate('2026-11-08T10:00')).toBe(false);
+  });
+
+  it('rejects values that are not strings', () => {
+    expect(isCalendarDate(20261108)).toBe(false);
+  });
+});
 
 describe('todayIn', () => {
   it('gives the date in the given time zone', () => {

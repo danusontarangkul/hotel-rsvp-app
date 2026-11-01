@@ -18,5 +18,6 @@ import { Night, NightSchema } from './night.schema';
   ],
   controllers: [AvailabilityController, BookingsController],
   providers: [BookingsService, { provide: CLOCK, useValue: systemClock }],
+  exports: [BookingsService],
 })
 export class BookingsModule {}

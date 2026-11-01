@@ -1,7 +1,12 @@
 import type { INestApplication } from '@nestjs/common';
 import request from 'supertest';
 import type { App } from 'supertest/types';
-import type { ChatModel, ModelMessage } from '../src/chat/chat.types';
+import type {
+  ChatModel,
+  ModelMessage,
+  ModelReply,
+  ModelTool,
+} from '../src/chat/chat.types';
 import { createTestApp } from './app.e2e';
 
 type ErrorBody = { statusCode: number; message: string | string[] };
@@ -12,8 +17,15 @@ const MODEL_REPLY = 'Check-in starts tomorrow at the earliest.';
 
 const question = { role: 'user', content: 'When is the earliest check-in?' };
 
-const modelReply = jest.fn<Promise<string>, [ModelMessage[]]>();
+const modelReply = jest.fn<
+  Promise<ModelReply>,
+  [ModelMessage[], ModelTool[]]
+>();
 const chatModel: ChatModel = { reply: modelReply };
+
+function text(content: string): ModelReply {
+  return { content, toolCalls: [] };
+}
 
 function ollamaNotRunning(): Error {
   return new TypeError('fetch failed');
@@ -31,7 +43,7 @@ describe('POST /api/chat', () => {
   });
 
   beforeEach(() => {
-    modelReply.mockResolvedValue(MODEL_REPLY);
+    modelReply.mockResolvedValue(text(MODEL_REPLY));
   });
 
   afterEach(async () => {
@@ -59,6 +71,117 @@ describe('POST /api/chat', () => {
   function sentSystemPrompt(): string {
     return modelReply.mock.calls[0][0][0].content;
   }
+
+  function book(checkIn: string, checkOut: string) {
+    return request(app.getHttpServer())
+      .post('/api/bookings')
+      .send({
+        guestName: 'Maya Chen',
+        guestEmail: 'maya.chen@example.com',
+        guestPhone: '4155550349',
+        checkIn,
+        checkOut,
+      })
+      .expect(201);
+  }
+
+  async function availabilityResultFor(
+    args: Record<string, unknown>,
+  ): Promise<unknown> {
+    modelReply
+      .mockResolvedValueOnce({
+        content: '',
+        toolCalls: [{ name: 'get_availability', arguments: args }],
+      })
+      .mockResolvedValueOnce(text('Here is what I found.'));
+    await chat({ messages: [question] }).expect(200);
+    const toolMessage = modelReply.mock.calls[1][0].at(-1);
+    return JSON.parse(toolMessage?.content ?? 'null');
+  }
+
+  it('gives the model the get_availability tool', async () => {
+    await chat({ messages: [question] }).expect(200);
+
+    const toolNames = modelReply.mock.calls[0][1].map((tool) => tool.name);
+    expect(toolNames).toEqual(['get_availability']);
+  });
+
+  it('answers get_availability with the booked nights from the database', async () => {
+    await book('2026-11-05', '2026-11-07');
+
+    await expect(availabilityResultFor({})).resolves.toEqual({
+      firstBookableDate: '2026-11-02',
+      bookedNights: ['2026-11-05', '2026-11-06'],
+    });
+  });
+
+  it('answers get_availability for a stay that overlaps a booking', async () => {
+    await book('2026-11-05', '2026-11-07');
+
+    await expect(
+      availabilityResultFor({ checkIn: '2026-11-04', checkOut: '2026-11-06' }),
+    ).resolves.toEqual({
+      firstBookableDate: '2026-11-02',
+      bookedNights: ['2026-11-05', '2026-11-06'],
+      stay: {
+        checkIn: 'Wednesday, November 4, 2026',
+        checkOut: 'Friday, November 6, 2026',
+        available: false,
+        reason: 'Some nights in this stay are already booked.',
+        bookedNightsInStay: ['2026-11-05'],
+      },
+    });
+  });
+
+  it('answers get_availability for a free stay', async () => {
+    await book('2026-11-05', '2026-11-07');
+
+    await expect(
+      availabilityResultFor({ checkIn: '2026-11-03', checkOut: '2026-11-05' }),
+    ).resolves.toEqual({
+      firstBookableDate: '2026-11-02',
+      bookedNights: ['2026-11-05', '2026-11-06'],
+      stay: {
+        checkIn: 'Tuesday, November 3, 2026',
+        checkOut: 'Thursday, November 5, 2026',
+        available: true,
+      },
+    });
+  });
+
+  it('answers get_availability for one night when only check-in is given', async () => {
+    await book('2026-11-05', '2026-11-07');
+
+    await expect(
+      availabilityResultFor({ checkIn: '2026-11-05' }),
+    ).resolves.toEqual({
+      firstBookableDate: '2026-11-02',
+      bookedNights: ['2026-11-05', '2026-11-06'],
+      stay: {
+        checkIn: 'Thursday, November 5, 2026',
+        checkOut: 'Friday, November 6, 2026',
+        available: false,
+        reason: 'Some nights in this stay are already booked.',
+        bookedNightsInStay: ['2026-11-05'],
+      },
+    });
+  });
+
+  it("returns the model's reply after it uses a tool", async () => {
+    modelReply
+      .mockResolvedValueOnce({
+        content: '',
+        toolCalls: [{ name: 'get_availability', arguments: {} }],
+      })
+      .mockResolvedValueOnce(text('Nov 3 is open.'));
+
+    const response = await chat({ messages: [question] }).expect(200);
+
+    expect(response.body).toEqual({
+      reply: 'Nov 3 is open.',
+      availabilityChanged: false,
+    });
+  });
 
   function expectBadRequest(body: object, messages: string[]) {
     return chat(body)
