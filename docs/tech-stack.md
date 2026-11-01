@@ -66,7 +66,7 @@ Next.js forwards `/api/*` to NestJS with a rewrite in `next.config`.
 ## Chat
 
 - Ollama runs on the developer's machine. Before `npm run dev`, install Ollama and run `ollama pull qwen3:8b`.
-- The model uses tool calling to check availability, book, cancel and look up bookings.
+- The model uses tool calling to check availability and book.
 - The chat only works locally. On Vercel there is no Ollama, so the chat shows as unavailable and the rest of the app still works.
 - Reply speed depends on the machine running Ollama.
 

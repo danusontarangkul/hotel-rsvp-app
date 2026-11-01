@@ -4,10 +4,10 @@
 
 | URL | Who | User Story | API calls |
 |---|---|---|---|
-| `/` | Guest | User Story 1, User Story 2, User Stories 7 to 11 | GET `/api/availability`, POST `/api/bookings`, GET `/api/auth/me`, POST `/api/auth/logout`, POST `/api/chat` |
+| `/` | Guest | User Story 1, User Story 2, User Stories 7 to 10 | GET `/api/availability`, POST `/api/bookings`, GET `/api/auth/me`, POST `/api/auth/logout`, POST `/api/chat` |
 | `/staff/signup` | Staff | User Story 3 | POST `/api/auth/signup` |
 | `/staff/login` | Staff | User Story 4 | POST `/api/auth/login` |
-| `/staff/bookings` | Staff (logged in) | User Story 4, 5, 6, User Stories 7 to 11 | GET `/api/bookings`, POST `/api/bookings/:id/cancel`, POST `/api/auth/logout`, POST `/api/chat` |
+| `/staff/bookings` | Staff (logged in) | User Story 4, 5, 6, User Stories 7 to 10 | GET `/api/bookings`, POST `/api/bookings/:id/cancel`, POST `/api/auth/logout`, POST `/api/chat` |
 
 ## Page flow
 

@@ -49,3 +49,4 @@ Not included in this build.
 - No limit on chat messages.
 - English only.
 - No tracking of chat cost or errors.
+- Staff can't ask the chat about bookings (who booked which dates, a booking's details). They use the bookings page. The chat only shows a booking's details in the staff Cancel flow.

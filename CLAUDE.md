@@ -6,7 +6,7 @@ A simple booking web app for a single hotel with one room. `web/` is the Next.js
 
 Read the relevant doc before changing anything it covers. Update the doc in the same pull request when behavior changes.
 
-- [docs/requirements.md](docs/requirements.md): users, requirements, booking rules, User Stories 1 to 11.
+- [docs/requirements.md](docs/requirements.md): users, requirements, booking rules, User Stories 1 to 10.
 - [docs/out-of-scope.md](docs/out-of-scope.md): what not to build.
 - [docs/tech-stack.md](docs/tech-stack.md): frameworks, services, validation, auth, testing, env vars, CI.
 - [docs/data-model.md](docs/data-model.md): MongoDB collections and fields.

@@ -47,7 +47,6 @@
 | User Story 8: Chat availability | nights from tomorrow onward | none |
 | User Story 9: Chat booking | none | Same as User Story 2 |
 | User Story 10: Chat cancel | booking by booking number | Same as User Story 6 |
-| User Story 11: Chat booking lookup | all bookings (staff only) | none |
 
 ## Rules
 

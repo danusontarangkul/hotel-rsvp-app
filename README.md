@@ -1,6 +1,6 @@
 # hotel-rsvp-app
 
-A simple booking web app for a single hotel with one room. Guests browse available dates and book the room. Hotel staff sign up, log in, view all bookings and cancel them.
+A simple booking web app for a single hotel with one room. Guests browse available dates and book the room. Hotel staff sign up, log in, view all bookings and cancel them. An AI chat assistant answers questions about the hotel and availability, and books stays right in the chat.
 
 ## Screens
 
@@ -21,6 +21,18 @@ Staff log in with their email and password, or create a staff account.
 Logged-in staff see every booking, active and cancelled, with the guest's contact details, dates and booking number. They can cancel an active booking after confirming, which opens its dates to guests again.
 
 ![Staff bookings page: a table of bookings with guest, contact details, check-in, check-out, booking number, status and a Cancel booking action](docs/images/staff-bookings.png)
+
+### Chat assistant: answer questions and book
+
+An AI agent, running locally with Ollama, chats with guests and staff from a button in the corner of the page. It starts with three options:
+
+- **Availability:** ask about any dates, written any way ("Nov 6", "11/24", "the 12th to the 14th"). It checks the real bookings and answers with the full dates.
+- **Book:** books the room step by step: check-in, check-out, a check that the dates are free, name, phone and email, then a summary to confirm. It saves a real booking and shows the booking number.
+- **FAQs:** answers questions about the hotel, like check-in and check-out times.
+
+Logged-in staff also get **Cancel**: they enter a booking's confirmation ID, review its details and type `CONFIRM` to cancel it.
+
+![Chat panel with the greeting "How can I help you today?", the Availability, Book and FAQs buttons, and a message box](docs/images/chat-assistant.png)
 
 ## Planning Process
 
