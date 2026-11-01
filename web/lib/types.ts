@@ -5,6 +5,15 @@ export type ChatTurn = {
   content: string;
 };
 
+export type ChatInput = {
+  messages: ChatTurn[];
+};
+
+export type ChatReply = {
+  reply: string;
+  availabilityChanged: boolean;
+};
+
 export type Staff = {
   id: string;
   name: string;

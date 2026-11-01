@@ -1,5 +1,10 @@
-import { ValidationPipe, type INestApplication } from '@nestjs/common';
+import {
+  BadRequestException,
+  ValidationPipe,
+  type INestApplication,
+} from '@nestjs/common';
 import cookieParser from 'cookie-parser';
+import { validationMessages } from './common/validation-errors';
 
 export function configureApp(app: INestApplication): void {
   app.setGlobalPrefix('api');
@@ -10,6 +15,8 @@ export function configureApp(app: INestApplication): void {
       forbidNonWhitelisted: true,
       transform: true,
       stopAtFirstError: true,
+      exceptionFactory: (errors) =>
+        new BadRequestException(validationMessages(errors)),
     }),
   );
 }
