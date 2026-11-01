@@ -1,6 +1,7 @@
-import { render, screen, waitFor } from '@testing-library/react';
+import { act, render, screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { ApiError, createBooking, getAvailability } from '@/lib/api';
+import { announceAvailabilityChanged } from '@/lib/availability-events';
 import BookingSection from './BookingSection';
 
 jest.mock('@/lib/api', () => ({
@@ -144,6 +145,18 @@ describe('BookingSection', () => {
 
     expect(screen.queryByRole('dialog')).not.toBeInTheDocument();
     expect(screen.getByLabelText('Check-in')).toHaveValue('');
+    await waitFor(() => expect(mockGetAvailability).toHaveBeenCalledTimes(2));
+  });
+
+  it('reloads the dates when the chat books a stay', async () => {
+    mockGetAvailability.mockResolvedValue(availability);
+    render(<BookingSection />);
+    await screen.findByRole('button', { name: /^Sunday, November 8th, 2026/ });
+
+    act(() => {
+      announceAvailabilityChanged();
+    });
+
     await waitFor(() => expect(mockGetAvailability).toHaveBeenCalledTimes(2));
   });
 

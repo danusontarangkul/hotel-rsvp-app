@@ -1,5 +1,80 @@
-import { addDays, format, parseISO } from 'date-fns';
+import {
+  addDays,
+  addYears,
+  format,
+  isValid,
+  parse,
+  parseISO,
+  startOfDay,
+} from 'date-fns';
 import type { Availability } from './types';
+
+const EARLIEST_CHAT_YEAR = 1000;
+
+const DATE_FORMATS_WITH_YEAR = [
+  'yyyy-MM-dd',
+  'M/d/yyyy',
+  'M/d/yy',
+  'M-d-yyyy',
+  'MMMM d yyyy',
+  'MMM d yyyy',
+  'MMMM do yyyy',
+  'MMM do yyyy',
+  'd MMMM yyyy',
+  'd MMM yyyy',
+  'EEEE MMMM d yyyy',
+  'EEE MMM d yyyy',
+];
+
+const DATE_FORMATS_WITHOUT_YEAR = [
+  'M/d',
+  'M-d',
+  'MMMM d',
+  'MMM d',
+  'MMMM do',
+  'MMM do',
+  'd MMMM',
+  'd MMM',
+  'EEEE MMMM d',
+  'EEE MMM d',
+];
+
+function toDateWords(text: string): string {
+  return text.replace(/[,.]/g, ' ').replace(/\s+/g, ' ').trim();
+}
+
+function parseWithFormats(
+  text: string,
+  formats: string[],
+  today: Date,
+): Date | null {
+  for (const dateFormat of formats) {
+    const date = parse(text, dateFormat, today);
+    if (isValid(date) && date.getFullYear() >= EARLIEST_CHAT_YEAR) {
+      return date;
+    }
+  }
+  return null;
+}
+
+export function parseChatDate(text: string, today: Date): string | null {
+  const words = toDateWords(text);
+  const withYear = parseWithFormats(words, DATE_FORMATS_WITH_YEAR, today);
+  if (withYear) {
+    return format(withYear, 'yyyy-MM-dd');
+  }
+  const withoutYear = parseWithFormats(words, DATE_FORMATS_WITHOUT_YEAR, today);
+  if (!withoutYear) {
+    return null;
+  }
+  const date =
+    withoutYear < startOfDay(today) ? addYears(withoutYear, 1) : withoutYear;
+  return format(date, 'yyyy-MM-dd');
+}
+
+export function formatLongDate(value: string): string {
+  return format(parseISO(value), 'EEEE, MMMM d, yyyy');
+}
 
 export type StaySelection = {
   checkIn: string | null;

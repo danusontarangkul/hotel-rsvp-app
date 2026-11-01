@@ -1,3 +1,5 @@
+import { PHONE_DIGITS } from '../common/phone';
+
 export const CHAT_MODEL = 'CHAT_MODEL';
 export const DEFAULT_OLLAMA_HOST = 'http://localhost:11434';
 export const DEFAULT_OLLAMA_MODEL = 'qwen3:8b';
@@ -10,7 +12,20 @@ export const CHAT_CONTEXT_TOKENS = 8192;
 export const CHAT_REPLY_TOKENS = 512;
 
 export const GET_AVAILABILITY_TOOL = 'get_availability';
+export const CREATE_BOOKING_TOOL = 'create_booking';
 export const UNKNOWN_TOOL = 'Unknown tool.';
+export const TOOL_PHONE_INVALID = `Phone number must have ${PHONE_DIGITS} digits. Ask the guest for their full phone number.`;
+export const GUEST_NAME_LABEL = 'full name';
+export const GUEST_EMAIL_LABEL = 'email';
+export const GUEST_PHONE_LABEL = 'phone number';
+export const guestDetailsNotGiven = (details: string): string =>
+  `Nothing was booked. The guest hasn't typed their ${details} in this chat. Ask them for it. Never make up guest details.`;
+export const bookingConfirmed = (
+  checkIn: string,
+  checkOut: string,
+  bookingNumber: string,
+): string =>
+  `You're booked from ${checkIn} to ${checkOut}. Your booking number is ${bookingNumber}.`;
 export const TOOL_DATES_INVALID =
   'Dates must be real dates in YYYY-MM-DD form. Work out the date from what the user wrote and call again. Do not ask the user for a date format.';
 export const STAY_NIGHTS_BOOKED =

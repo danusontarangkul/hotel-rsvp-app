@@ -15,7 +15,9 @@
 - Tables use `shared/Table.tsx`, `shared/TableRow.tsx` and `shared/TableCell.tsx`. On screens narrower than `lg` each row shows as a card: the header row is hidden and each `TableCell` shows its `label`. Nothing scrolls sideways.
 - `components/shared/` holds only generic pieces with no booking or staff logic.
 - `chat/ChatWidget` is added per page (`/` and `/staff/bookings`), not in `layout.tsx`. It holds the chat history in state, sends the whole history with `useChat` on each message, and switches between the "Open chat" button and `ChatPanel`. Each message bubble is a `ChatMessage`.
+- When a chat reply has `availabilityChanged: true`, `ChatWidget` calls `announceAvailabilityChanged()` (`lib/availability-events.ts`). Anything showing availability listens with `useOnAvailabilityChanged(refetch)`, like `BookingSection`, so the chat and the calendar don't need to know about each other.
 - Chat copy lives in `components/chat/chatCopy.ts`.
+- The "Book" chat flow is pure functions in `components/chat/bookingFlow.ts` (step in, step and replies out), so each step is tested without rendering. `ChatWidget` runs the API calls the flow asks for (`useCheckAvailability`, `useCreateBooking`).
 - No `loading.tsx`, `error.tsx` or middleware.
 - Tests (`*.test.tsx`, `*.test.ts`) sit next to the file they test and run with Jest and React Testing Library.
 

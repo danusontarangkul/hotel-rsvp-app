@@ -13,7 +13,8 @@ type ButtonProps = Omit<
     | 'ghost'
     | 'icon'
     | 'round'
-    | 'round-small';
+    | 'round-small'
+    | 'chip';
   loading?: boolean;
 };
 
@@ -27,6 +28,7 @@ const VARIANTS: Record<NonNullable<ButtonProps['variant']>, string> = {
   icon: 'rounded p-1 text-muted',
   round: 'rounded-full bg-primary p-4 text-on-primary shadow-lg',
   'round-small': 'rounded-full bg-primary p-1.5 text-on-primary',
+  chip: 'rounded-full border border-primary bg-surface px-3 py-1.5 text-sm font-medium text-primary',
 };
 
 export default function Button({

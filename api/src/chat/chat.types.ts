@@ -53,6 +53,23 @@ export type StayCheck =
       bookedNightsInStay?: string[];
     };
 
+export type ToolOutcome = {
+  content: string;
+  availabilityChanged: boolean;
+  finalReply?: string;
+};
+
+export type ToolRound = {
+  messages: ModelMessage[];
+  finalReplies: string[];
+  availabilityChanged: boolean;
+};
+
+export type ModelAnswer = {
+  content: string;
+  availabilityChanged: boolean;
+};
+
 export type ChatResponse = {
   reply: string;
   availabilityChanged: boolean;

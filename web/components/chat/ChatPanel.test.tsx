@@ -83,6 +83,39 @@ describe('ChatPanel', () => {
     ).not.toBeInTheDocument();
   });
 
+  it('shows the suggested questions it is given', async () => {
+    const onQuickReply = jest.fn();
+    render(
+      <ChatPanel
+        messages={MESSAGES}
+        onSend={jest.fn()}
+        onMinimize={jest.fn()}
+        quickReplies={['Ask about availability']}
+        onQuickReply={onQuickReply}
+      />,
+    );
+
+    await userEvent.click(
+      screen.getByRole('button', { name: 'Ask about availability' }),
+    );
+
+    expect(onQuickReply).toHaveBeenCalledWith('Ask about availability');
+  });
+
+  it('hides suggested questions when there are none', () => {
+    render(
+      <ChatPanel
+        messages={MESSAGES}
+        onSend={jest.fn()}
+        onMinimize={jest.fn()}
+      />,
+    );
+
+    expect(
+      screen.queryByRole('group', { name: 'Suggested questions' }),
+    ).not.toBeInTheDocument();
+  });
+
   it('sends a typed message', async () => {
     const onSend = jest.fn();
     render(

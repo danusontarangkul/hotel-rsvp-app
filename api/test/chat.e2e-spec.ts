@@ -99,11 +99,11 @@ describe('POST /api/chat', () => {
     return JSON.parse(toolMessage?.content ?? 'null');
   }
 
-  it('gives the model the get_availability tool', async () => {
+  it('gives the model the get_availability and create_booking tools', async () => {
     await chat({ messages: [question] }).expect(200);
 
     const toolNames = modelReply.mock.calls[0][1].map((tool) => tool.name);
-    expect(toolNames).toEqual(['get_availability']);
+    expect(toolNames).toEqual(['get_availability', 'create_booking']);
   });
 
   it('answers get_availability with the booked nights from the database', async () => {
@@ -115,61 +115,54 @@ describe('POST /api/chat', () => {
     });
   });
 
-  it('answers get_availability for a stay that overlaps a booking', async () => {
+  async function availabilityReplyFor(args: Record<string, unknown>) {
+    modelReply.mockResolvedValueOnce({
+      content: '',
+      toolCalls: [{ name: 'get_availability', arguments: args }],
+    });
+    const response = await chat({ messages: [question] }).expect(200);
+    return response.body as { reply: string; availabilityChanged: boolean };
+  }
+
+  it('replies with only the summary for a stay that overlaps a booking', async () => {
     await book('2026-11-05', '2026-11-07');
 
     await expect(
-      availabilityResultFor({ checkIn: '2026-11-04', checkOut: '2026-11-06' }),
+      availabilityReplyFor({ checkIn: '2026-11-04', checkOut: '2026-11-06' }),
     ).resolves.toEqual({
-      firstBookableDate: '2026-11-02',
-      bookedNights: ['2026-11-05', '2026-11-06'],
-      stay: {
-        summary:
-          'Wednesday, November 4, 2026 to Friday, November 6, 2026 is not available because the night of Thursday, November 5, 2026 is already booked.',
-        checkIn: 'Wednesday, November 4, 2026',
-        checkOut: 'Friday, November 6, 2026',
-        available: false,
-        reason: 'Some nights in this stay are already booked.',
-        bookedNightsInStay: ['2026-11-05'],
-      },
+      reply:
+        'Wednesday, November 4, 2026 to Friday, November 6, 2026 is not available because the night of Thursday, November 5, 2026 is already booked.',
+      availabilityChanged: false,
     });
   });
 
-  it('answers get_availability for a free stay', async () => {
+  it('replies with only the summary for a free stay', async () => {
     await book('2026-11-05', '2026-11-07');
 
     await expect(
-      availabilityResultFor({ checkIn: '2026-11-03', checkOut: '2026-11-05' }),
+      availabilityReplyFor({ checkIn: '2026-11-03', checkOut: '2026-11-05' }),
     ).resolves.toEqual({
-      firstBookableDate: '2026-11-02',
-      bookedNights: ['2026-11-05', '2026-11-06'],
-      stay: {
-        summary:
-          'Tuesday, November 3, 2026 to Thursday, November 5, 2026 is available.',
-        checkIn: 'Tuesday, November 3, 2026',
-        checkOut: 'Thursday, November 5, 2026',
-        available: true,
-      },
+      reply:
+        'Tuesday, November 3, 2026 to Thursday, November 5, 2026 is available.',
+      availabilityChanged: false,
     });
   });
 
-  it('answers get_availability for one night when only check-in is given', async () => {
+  it('replies with only the summary for one night', async () => {
     await book('2026-11-05', '2026-11-07');
 
     await expect(
-      availabilityResultFor({ checkIn: '2026-11-05' }),
+      availabilityReplyFor({ checkIn: '2026-11-05' }),
     ).resolves.toEqual({
-      firstBookableDate: '2026-11-02',
-      bookedNights: ['2026-11-05', '2026-11-06'],
-      stay: {
-        summary: 'The night of Thursday, November 5, 2026 is already booked.',
-        checkIn: 'Thursday, November 5, 2026',
-        checkOut: 'Friday, November 6, 2026',
-        available: false,
-        reason: 'Some nights in this stay are already booked.',
-        bookedNightsInStay: ['2026-11-05'],
-      },
+      reply: 'The night of Thursday, November 5, 2026 is already booked.',
+      availabilityChanged: false,
     });
+  });
+
+  it('does not ask the model again after checking dates', async () => {
+    await availabilityReplyFor({ checkIn: '2026-11-05' });
+
+    expect(modelReply).toHaveBeenCalledTimes(1);
   });
 
   it("returns the model's reply after it uses a tool", async () => {
@@ -185,6 +178,148 @@ describe('POST /api/chat', () => {
     expect(response.body).toEqual({
       reply: 'Nov 3 is open.',
       availabilityChanged: false,
+    });
+  });
+
+  describe('create_booking', () => {
+    const guestBooking = {
+      checkIn: '2026-11-12',
+      checkOut: '2026-11-14',
+      guestName: 'Ana Lopez',
+      guestEmail: 'Ana@Example.com',
+      guestPhone: '(555) 010-0123',
+    };
+
+    const guestMessage = {
+      role: 'user',
+      content:
+        'Book Nov 12 to Nov 14 for Ana Lopez, Ana@Example.com, (555) 010-0123',
+    };
+
+    function bookThroughChat(
+      args: Record<string, unknown>,
+      message = guestMessage,
+    ) {
+      modelReply
+        .mockResolvedValueOnce({
+          content: '',
+          toolCalls: [{ name: 'create_booking', arguments: args }],
+        })
+        .mockResolvedValueOnce(text('Done.'));
+      return chat({ messages: [message] }).expect(200);
+    }
+
+    function bookingToolResult(): unknown {
+      const toolMessage = modelReply.mock.calls[1][0].at(-1);
+      return JSON.parse(toolMessage?.content ?? 'null');
+    }
+
+    async function staffBookings(): Promise<Record<string, unknown>[]> {
+      const cookie = await staffCookie();
+      const response = await request(app.getHttpServer())
+        .get('/api/bookings')
+        .set('Cookie', cookie)
+        .expect(200);
+      return response.body as Record<string, unknown>[];
+    }
+
+    it('saves the booking and says availability changed', async () => {
+      const response = await bookThroughChat(guestBooking);
+
+      expect(response.body).toEqual({
+        reply: 'Done.',
+        availabilityChanged: true,
+      });
+      const availability = await request(app.getHttpServer())
+        .get('/api/availability')
+        .expect(200);
+      expect(
+        (availability.body as { bookedNights: string[] }).bookedNights,
+      ).toEqual(['2026-11-12', '2026-11-13']);
+    });
+
+    it('saves the guest details the same way the booking form does', async () => {
+      await bookThroughChat(guestBooking);
+
+      const [saved] = await staffBookings();
+      expect(saved).toMatchObject({
+        guestName: 'Ana Lopez',
+        guestEmail: 'ana@example.com',
+        guestPhone: '5550100123',
+        checkIn: '2026-11-12',
+        checkOut: '2026-11-14',
+        status: 'active',
+      });
+    });
+
+    it('gives the model the booking number and a confirmation sentence', async () => {
+      await bookThroughChat(guestBooking);
+
+      expect(bookingToolResult()).toEqual({
+        bookingNumber: expect.stringMatching(/^[A-Z2-9]{6}$/) as string,
+        checkIn: '2026-11-12',
+        checkOut: '2026-11-14',
+        summary: expect.stringMatching(
+          /^You're booked from Thursday, November 12, 2026 to Saturday, November 14, 2026\. Your booking number is [A-Z2-9]{6}\.$/,
+        ) as string,
+      });
+    });
+
+    it('tells the model when the dates are taken, and saves nothing', async () => {
+      await book('2026-11-13', '2026-11-15');
+
+      const response = await bookThroughChat(guestBooking);
+
+      expect(bookingToolResult()).toEqual({
+        error: 'Those dates are no longer available.',
+      });
+      expect(
+        (response.body as { availabilityChanged: boolean }).availabilityChanged,
+      ).toBe(false);
+      expect(await staffBookings()).toHaveLength(1);
+    });
+
+    it('tells the model which details are missing, and saves nothing', async () => {
+      await bookThroughChat({ checkIn: '2026-11-12', checkOut: '2026-11-14' });
+
+      expect(bookingToolResult()).toEqual({
+        error:
+          'Name is required. Email must be a valid email address. Phone number is required.',
+      });
+      expect(await staffBookings()).toHaveLength(0);
+    });
+
+    it('tells the model when check-in is too early', async () => {
+      await bookThroughChat({
+        ...guestBooking,
+        checkIn: '2026-11-01',
+        checkOut: '2026-11-03',
+      });
+
+      expect(bookingToolResult()).toEqual({
+        error: 'Check-in must be tomorrow or later.',
+      });
+    });
+
+    it('refuses guest details the guest never typed, and saves nothing', async () => {
+      const response = await bookThroughChat(
+        {
+          ...guestBooking,
+          guestName: 'Guest Name',
+          guestEmail: 'guest@example.com',
+          guestPhone: '1234567890',
+        },
+        { role: 'user', content: 'Book Nov 12 to Nov 14 for me please.' },
+      );
+
+      expect(bookingToolResult()).toEqual({
+        error:
+          "Nothing was booked. The guest hasn't typed their full name, email and phone number in this chat. Ask them for it. Never make up guest details.",
+      });
+      expect(
+        (response.body as { availabilityChanged: boolean }).availabilityChanged,
+      ).toBe(false);
+      expect(await staffBookings()).toHaveLength(0);
     });
   });
 

@@ -25,10 +25,12 @@ import type {
   ChatMessage,
   ChatModel,
   ChatResponse,
+  ModelAnswer,
   ModelMessage,
   ModelReply,
   ModelTool,
   ModelToolCall,
+  ToolRound,
 } from './chat.types';
 import { isModelUnavailable } from './model-errors';
 
@@ -49,21 +51,33 @@ export class ChatService {
       throw new BadRequestException(problems);
     }
     const audience: ChatAudience = staffId === undefined ? 'guest' : 'staff';
-    const reply = trimText(
-      await this.answer(this.modelMessages(messages, audience)),
+    const recent = messages.slice(-MAX_CHAT_MESSAGES);
+    const answer = await this.answer(
+      this.modelMessages(recent, audience),
+      typedByGuest(recent),
     );
+    const reply = trimText(answer.content);
     return {
       reply: reply === '' ? CANNOT_HELP : reply,
-      availabilityChanged: false,
+      availabilityChanged: answer.availabilityChanged,
     };
   }
 
-  private async answer(messages: ModelMessage[]): Promise<string> {
+  private async answer(
+    messages: ModelMessage[],
+    guestTyped: string,
+  ): Promise<ModelAnswer> {
     let conversation = messages;
+    let availabilityChanged = false;
     for (let round = 0; round < MAX_TOOL_ROUNDS; round += 1) {
       const reply = await this.modelReply(conversation, CHAT_TOOLS);
       if (reply.toolCalls.length === 0) {
-        return reply.content;
+        return { content: reply.content, availabilityChanged };
+      }
+      const results = await this.toolResults(reply.toolCalls, guestTyped);
+      availabilityChanged ||= results.availabilityChanged;
+      if (results.finalReplies.length > 0) {
+        return { content: results.finalReplies.join(' '), availabilityChanged };
       }
       conversation = [
         ...conversation,
@@ -72,23 +86,33 @@ export class ChatService {
           content: reply.content,
           toolCalls: reply.toolCalls,
         },
-        ...(await this.toolResults(reply.toolCalls)),
+        ...results.messages,
       ];
     }
     const finalReply = await this.modelReply(conversation, []);
-    return finalReply.content;
+    return { content: finalReply.content, availabilityChanged };
   }
 
-  private async toolResults(calls: ModelToolCall[]): Promise<ModelMessage[]> {
-    const results: ModelMessage[] = [];
+  private async toolResults(
+    calls: ModelToolCall[],
+    guestTyped: string,
+  ): Promise<ToolRound> {
+    const messages: ModelMessage[] = [];
+    const finalReplies: string[] = [];
+    let availabilityChanged = false;
     for (const call of calls) {
-      results.push({
+      const outcome = await this.tools.run(call, guestTyped);
+      availabilityChanged ||= outcome.availabilityChanged;
+      if (outcome.finalReply) {
+        finalReplies.push(outcome.finalReply);
+      }
+      messages.push({
         role: 'tool',
         toolName: call.name,
-        content: await this.tools.run(call),
+        content: outcome.content,
       });
     }
-    return results;
+    return { messages, finalReplies, availabilityChanged };
   }
 
   private async modelReply(
@@ -112,9 +136,16 @@ export class ChatService {
     const today = todayIn(HOTEL_TIME_ZONE, this.clock.now());
     return [
       { role: 'system', content: buildSystemPrompt(audience, today) },
-      ...messages.slice(-MAX_CHAT_MESSAGES),
+      ...messages,
     ];
   }
+}
+
+function typedByGuest(messages: ChatMessage[]): string {
+  return messages
+    .filter((message) => message.role === 'user')
+    .map((message) => message.content)
+    .join('\n');
 }
 
 function conversationProblems(messages: ChatMessage[]): string[] {

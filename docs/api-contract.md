@@ -234,7 +234,7 @@ User Stories 7 to 11. Sends the conversation and returns the chat's next reply. 
 - `availabilityChanged` is `true` when this reply booked or cancelled a stay, so the web app reloads the calendar.
 - `reply` is the model's answer with spaces trimmed from both ends. An empty answer becomes `Unfortunately, I cannot help with that.`
 - The model is told whether the user is a guest or staff (from the login cookie) and today's date in the hotel's time zone.
-- Until the booking tools are connected, `availabilityChanged` is always `false`.
+- `availabilityChanged` is `true` only when `create_booking` saved a booking during this reply.
 
 **Errors**
 | Status | When |
@@ -251,13 +251,18 @@ The model answers by calling these tools. The server decides which tools it gets
 | Tool | Who | Status | Does |
 |---|---|---|---|
 | `get_availability` | Everyone | Connected | Same as GET `/api/availability`. With an optional `checkIn` (and optional `checkOut`) it also returns `stay`, using the booking rules (see below) |
-| `create_booking` | Everyone | Not yet | Same as POST `/api/bookings`, with the same rules and errors |
+| `create_booking` | Everyone | Connected | Same as POST `/api/bookings`, with the same rules and errors (see below) |
 | `cancel_booking` | Staff | Not yet | Cancels by booking number, same rules and errors as POST `/api/bookings/:id/cancel` |
 | `get_bookings` | Staff | Not yet | Same as GET `/api/bookings` |
 
 - `get_availability` with `checkIn` returns `{ firstBookableDate, bookedNights, stay }`. Without `checkOut` it checks one night (`checkOut` is the next day).
-- `stay` always has a `summary`, one finished sentence the model starts its reply with, like `The night of Friday, November 20, 2026 is already booked.` The sentence templates are in `chat.constants.ts`. `stay` also has `checkIn` and `checkOut` written out for people, like `Friday, November 20, 2026`. It also has `"available": true`, or `"available": false` with a `reason`: `Check-in must be tomorrow or later.`, `Check-out must be after check-in.` or `Some nights in this stay are already booked.` (then with `bookedNightsInStay`). Checking out on a booked night is allowed.
+- `stay` always has a `summary`, one finished sentence like `The night of Friday, November 20, 2026 is already booked.` The sentence templates are in `chat.constants.ts`.
+- When `get_availability` checks a stay, the endpoint's `reply` is exactly that `summary` (several stays checked at once are joined with a space). The model isn't asked again, so it can't add a follow-up question. `stay` also has `checkIn` and `checkOut` written out for people, like `Friday, November 20, 2026`. It also has `"available": true`, or `"available": false` with a `reason`: `Check-in must be tomorrow or later.`, `Check-out must be after check-in.` or `Some nights in this stay are already booked.` (then with `bookedNightsInStay`). Checking out on a booked night is allowed.
 - `get_availability` with only `checkOut`, or a date that isn't a real `YYYY-MM-DD` date, returns `{ "error": "..." }` to the model with `TOOL_DATES_INVALID` from `chat.constants.ts`, which tells the model to work out the date itself and call again.
+- `create_booking` takes `checkIn`, `checkOut`, `guestName`, `guestEmail` and `guestPhone`. It checks them with the same `CreateBookingDto` and `BookingsService.create` as POST `/api/bookings`, so the email is stored lowercase and the same `400`/`409` messages come back to the model as `{ "error": "..." }`.
+- `create_booking` turns the phone into digits (`(555) 010-0123` becomes `5550100123`) and returns `TOOL_PHONE_INVALID` unless it has 10 digits, like the booking form.
+- `create_booking` only books if the guest's name, email and phone appear in what the guest typed in the last 10 messages. Otherwise it books nothing and returns `guestDetailsNotGiven(...)` from `chat.constants.ts`, naming what's missing. This stops the model from making details up.
+- `create_booking` success returns `{ bookingNumber, checkIn, checkOut, summary }`, where `summary` is `You're booked from <check-in> to <check-out>. Your booking number is <number>.` with full dates.
 - An unknown tool name returns `{ "error": "Unknown tool." }` to the model.
 - The model can call tools up to 3 times per message. After that it must answer without tools.
 - A tool error (for example `Those dates are no longer available.`) goes back to the model so it can explain it in the reply. It doesn't make the endpoint fail.
