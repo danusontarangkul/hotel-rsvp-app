@@ -1,10 +1,13 @@
 import { render } from '@testing-library/react';
 import {
   ArrowRightIcon,
+  ChatIcon,
   CloseIcon,
   EyeIcon,
   EyeOffIcon,
   LogOutIcon,
+  MinimizeIcon,
+  SendIcon,
 } from './icons';
 
 describe('icons', () => {
@@ -14,6 +17,9 @@ describe('icons', () => {
     ['LogOutIcon', LogOutIcon],
     ['EyeIcon', EyeIcon],
     ['EyeOffIcon', EyeOffIcon],
+    ['ChatIcon', ChatIcon],
+    ['MinimizeIcon', MinimizeIcon],
+    ['SendIcon', SendIcon],
   ])('%s is hidden from screen readers', (_, IconComponent) => {
     const { container } = render(<IconComponent />);
 

@@ -33,6 +33,18 @@ export function LogOutIcon() {
   );
 }
 
+export function ChatIcon() {
+  return <Icon path="M21 12a8 8 0 0 1-11.6 7.1L4 20l1-4.6A8 8 0 1 1 21 12z" />;
+}
+
+export function SendIcon() {
+  return <Icon path="M22 2L11 13M22 2l-7 20-4-9-9-4 20-7z" />;
+}
+
+export function MinimizeIcon() {
+  return <Icon path="M5 12h14" />;
+}
+
 export function EyeIcon() {
   return (
     <Icon path="M2 12s3.5-7 10-7 10 7 10 7-3.5 7-10 7S2 12 2 12zM12 15a3 3 0 1 0 0-6 3 3 0 0 0 0 6z" />

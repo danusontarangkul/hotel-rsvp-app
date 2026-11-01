@@ -1,5 +1,6 @@
 import type { Metadata } from 'next';
 import LogoutButton from '@/components/auth/LogoutButton';
+import ChatWidget from '@/components/chat/ChatWidget';
 import NavLink from '@/components/shared/NavLink';
 import Page from '@/components/shared/Page';
 import PageHeading from '@/components/shared/PageHeading';
@@ -25,6 +26,7 @@ export default function StaffBookingsPage() {
         <PageHeading>Bookings</PageHeading>
         <BookingsSection />
       </Page>
+      <ChatWidget />
     </>
   );
 }

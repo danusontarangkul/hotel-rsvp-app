@@ -219,7 +219,7 @@ User Stories 7 to 11. Sends the conversation and returns the chat's next reply. 
 
 - `messages`: required, at least 1 message.
 - `role`: `user` or `assistant`.
-- `content`: not blank.
+- `content`: not blank, at most 200 characters.
 - The last message must be from `user`.
 - Only the last 10 messages are sent to the model; older ones are dropped.
 

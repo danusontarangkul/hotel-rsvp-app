@@ -1,5 +1,6 @@
 import HomeHeaderActions from '@/components/auth/HomeHeaderActions';
 import BookingSection from '@/components/booking/BookingSection';
+import ChatWidget from '@/components/chat/ChatWidget';
 import Page from '@/components/shared/Page';
 import PageHeading from '@/components/shared/PageHeading';
 import SiteHeader from '@/components/shared/SiteHeader';
@@ -12,6 +13,7 @@ export default function Home() {
         <PageHeading>Book the room</PageHeading>
         <BookingSection />
       </Page>
+      <ChatWidget />
     </>
   );
 }
