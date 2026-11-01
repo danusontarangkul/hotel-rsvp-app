@@ -14,8 +14,11 @@ NestJS REST API. All paths start with `/api` (the Next.js rewrite forwards them 
 | GET | `/api/auth/me` | Staff | User Story 4: Show log out on the home page |
 | GET | `/api/bookings` | Staff | User Story 5: View bookings |
 | POST | `/api/bookings/:id/cancel` | Staff | User Story 6: Cancel |
+| POST | `/api/chat` | Optional | User Stories 7 to 11: Chat |
 
 "Staff" means a valid login cookie is required. A missing, empty, tampered or expired `token` cookie returns `401` with `message` `Unauthorized`, before the endpoint does anything.
+
+"Optional" means the login cookie is read if present. A valid cookie is treated as staff; a missing or invalid one is treated as a guest, never a `401`.
 
 ## Errors
 
@@ -198,6 +201,60 @@ User Story 6. `:id` is the booking's `id` from the list. No request body. Marks 
 - Any request body is ignored.
 
 The "are you sure?" confirmation is front end only.
+
+## POST /api/chat
+
+User Stories 7 to 11. Sends the conversation and returns the chat's next reply. Nothing is saved; the web app keeps the history and sends all of it each time.
+
+**Request**
+```json
+{
+  "messages": [
+    { "role": "user", "content": "Is Nov 3 to Nov 5 open?" },
+    { "role": "assistant", "content": "Yes, Nov 3 to Nov 5 is available." },
+    { "role": "user", "content": "Book it for Ana Lopez, 5550100123, ana@example.com" }
+  ]
+}
+```
+
+- `messages`: required, at least 1 message.
+- `role`: `user` or `assistant`.
+- `content`: not blank.
+- The last message must be from `user`.
+- Only the last 10 messages are sent to the model; older ones are dropped.
+
+**Response `200`**
+```json
+{
+  "reply": "Please confirm: Ana Lopez, Nov 3 to Nov 5. Shall I book it?",
+  "availabilityChanged": false
+}
+```
+
+- `availabilityChanged` is `true` when this reply booked or cancelled a stay, so the web app reloads the calendar.
+
+**Errors**
+| Status | When |
+|---|---|
+| 400 | `messages` missing or empty, a bad `role`, a blank `content`, or the last message isn't from `user`. Unknown fields also return `400`. |
+| 503 | Ollama is not running or doesn't respond. `message` is exactly `Chat is unavailable.` |
+
+- `400` messages, one per problem: `Messages are required.`, `Role must be user or assistant.`, `Message content is required.`, `The last message must be from the user.`
+
+**Tools**
+
+The model answers by calling these tools. The server decides which tools it gets, based on the login cookie only, never on the message history.
+
+| Tool | Who | Does |
+|---|---|---|
+| `get_availability` | Everyone | Same as GET `/api/availability` |
+| `create_booking` | Everyone | Same as POST `/api/bookings`, with the same rules and errors |
+| `cancel_booking` | Staff | Cancels by booking number, same rules and errors as POST `/api/bookings/:id/cancel` |
+| `get_bookings` | Staff | Same as GET `/api/bookings` |
+
+- A tool error (for example `Those dates are no longer available.`) goes back to the model so it can explain it in the reply. It doesn't make the endpoint fail.
+- `cancel_booking` with an unknown booking number returns `Booking not found.` to the model.
+- The model is told to show the details and wait for the user to confirm before calling `create_booking` or `cancel_booking`.
 
 ## Login cookie
 

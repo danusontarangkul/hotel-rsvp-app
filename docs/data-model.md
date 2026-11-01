@@ -43,6 +43,11 @@
 | User Story 4: Staff log in | staff by email (check password) | none |
 | User Story 5: View bookings | all bookings, active and cancelled, sorted by checkIn | none |
 | User Story 6: Cancel | booking by id | Set booking status to cancelled + delete its nights, together |
+| User Story 7: Chat FAQ | none | none |
+| User Story 8: Chat availability | nights from tomorrow onward | none |
+| User Story 9: Chat booking | none | Same as User Story 2 |
+| User Story 10: Chat cancel | booking by booking number | Same as User Story 6 |
+| User Story 11: Chat booking lookup | all bookings (staff only) | none |
 
 ## Rules
 
