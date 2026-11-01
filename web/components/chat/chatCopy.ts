@@ -24,9 +24,44 @@ export const START_OPTIONS = [
   BOOK_STAY_OPTION,
   FAQ_OPTION,
 ];
+export const CANCEL_OPTION = 'Cancel';
+export const STAFF_START_OPTIONS = [...START_OPTIONS, CANCEL_OPTION];
 export const YES_OPTION = 'Yes';
 export const NO_OPTION = 'No';
 export const YES_NO_OPTIONS = [YES_OPTION, NO_OPTION];
+
+export const CONFIRM_WORD = 'CONFIRM';
+export const ASK_CONFIRMATION_ID = 'What is the confirmation ID?';
+export const CONFIRMATION_ID_MISSING = `Please type the confirmation ID. ${ASK_CONFIRMATION_ID}`;
+export const bookingNotFound = (bookingNumber: string): string =>
+  `I couldn't find a booking with confirmation ID ${bookingNumber}. ${ASK_CONFIRMATION_ID}`;
+export const LOOKUP_FAILED = `Sorry, I couldn't look that booking up just now. ${ASK_CONFIRMATION_ID}`;
+export const bookingAlreadyCancelled = (bookingNumber: string): string =>
+  `Booking ${bookingNumber} is already cancelled. Nothing was changed.`;
+export const cancelDetails = (details: {
+  bookingNumber: string;
+  guestName: string;
+  guestPhone: string;
+  guestEmail: string;
+  checkIn: string;
+  checkOut: string;
+}): string =>
+  [
+    `Booking ${details.bookingNumber}:`,
+    `Name: ${details.guestName}`,
+    `Phone: ${details.guestPhone}`,
+    `Email: ${details.guestEmail}`,
+    `Check-in: ${details.checkIn}`,
+    `Check-out: ${details.checkOut}`,
+    '',
+    "Warning: cancelling can't be undone. The booking will be cancelled and its dates opened to other guests.",
+    `To cancel it, type ${CONFIRM_WORD} exactly. Anything else keeps the booking.`,
+  ].join('\n');
+export const bookingCancelled = (bookingNumber: string): string =>
+  `Booking ${bookingNumber} is cancelled. Its dates are open again.`;
+export const NOTHING_CANCELLED = 'No problem, nothing was cancelled.';
+export const cancelFailed = (bookingNumber: string): string =>
+  `Sorry, I couldn't cancel booking ${bookingNumber}. Nothing was changed.`;
 
 export const AVAILABILITY_QUESTION =
   'What date(s) are you asking about availability for?';

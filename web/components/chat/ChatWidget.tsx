@@ -3,9 +3,12 @@
 import { useState } from 'react';
 import Button from '@/components/shared/Button';
 import { ChatIcon } from '@/components/shared/icons';
+import { useCancelBooking } from '@/hooks/useCancelBooking';
 import { useChat } from '@/hooks/useChat';
 import { useCheckAvailability } from '@/hooks/useCheckAvailability';
 import { useCreateBooking } from '@/hooks/useCreateBooking';
+import { useCurrentStaff } from '@/hooks/useCurrentStaff';
+import { useFindBooking } from '@/hooks/useFindBooking';
 import { announceAvailabilityChanged } from '@/lib/availability-events';
 import { toFormErrors } from '@/lib/form-errors';
 import type { ChatTurn } from '@/lib/types';
@@ -21,10 +24,20 @@ import {
   type BookingFlowResult,
 } from './bookingFlow';
 import {
+  afterCancel,
+  afterLookUp,
+  answerCancelFlow,
+  startCancelFlow,
+  type CancelFlow,
+  type CancelFlowResult,
+} from './cancelFlow';
+import {
   BOOK_STAY_OPTION,
+  CANCEL_OPTION,
   CHAT_GREETING,
   FIXED_REPLIES,
   OPEN_CHAT_LABEL,
+  STAFF_START_OPTIONS,
   START_OPTIONS,
   YES_NO_OPTIONS,
 } from './chatCopy';
@@ -41,14 +54,28 @@ function withReplies(conversation: ChatTurn[], replies: string[]): ChatTurn[] {
 export default function ChatWidget() {
   const [isOpen, setIsOpen] = useState<boolean>(false);
   const [messages, setMessages] = useState<ChatTurn[]>([GREETING]);
-  const [flow, setFlow] = useState<BookingFlow | null>(null);
+  const [bookingFlow, setBookingFlow] = useState<BookingFlow | null>(null);
+  const [cancelFlow, setCancelFlow] = useState<CancelFlow | null>(null);
   const [showStartOptions, setShowStartOptions] = useState<boolean>(true);
+  const currentStaff = useCurrentStaff();
   const chat = useChat();
   const availabilityCheck = useCheckAvailability();
   const booking = useCreateBooking();
-  const sending = chat.loading || availabilityCheck.loading || booking.loading;
+  const bookingLookup = useFindBooking();
+  const cancellation = useCancelBooking();
+  const isStaff = Boolean(currentStaff.data);
+  const sending =
+    chat.loading ||
+    availabilityCheck.loading ||
+    booking.loading ||
+    bookingLookup.loading ||
+    cancellation.loading;
 
-  async function followUp(
+  function showReplies(conversation: ChatTurn[], replies: string[]) {
+    setMessages(withReplies(conversation, replies));
+  }
+
+  async function bookingFollowUp(
     result: BookingFlowResult,
   ): Promise<BookingFlowResult | null> {
     if (result.next === 'checkAvailability' && result.flow) {
@@ -71,13 +98,43 @@ export default function ChatWidget() {
     conversation: ChatTurn[],
     result: BookingFlowResult,
   ) {
-    setFlow(result.flow);
-    const next = await followUp(result);
+    setBookingFlow(result.flow);
+    const next = await bookingFollowUp(result);
     const final = next ?? result;
-    setFlow(final.flow);
-    setMessages(
-      withReplies(conversation, [...result.replies, ...(next?.replies ?? [])]),
-    );
+    setBookingFlow(final.flow);
+    showReplies(conversation, [...result.replies, ...(next?.replies ?? [])]);
+    if (final.flow === null) {
+      setShowStartOptions(true);
+    }
+  }
+
+  async function cancelFollowUp(
+    result: CancelFlowResult,
+  ): Promise<CancelFlowResult | null> {
+    if (result.next === 'lookUp' && result.flow?.step === 'lookingUp') {
+      const { bookingNumber } = result.flow;
+      return afterLookUp(bookingNumber, await bookingLookup.run(bookingNumber));
+    }
+    if (result.next === 'cancel' && result.flow?.step === 'confirmCancel') {
+      const { booking: toCancel } = result.flow;
+      const cancelled = await cancellation.run(toCancel.id);
+      if (cancelled) {
+        announceAvailabilityChanged();
+      }
+      return afterCancel(toCancel, cancelled);
+    }
+    return null;
+  }
+
+  async function continueCancel(
+    conversation: ChatTurn[],
+    result: CancelFlowResult,
+  ) {
+    setCancelFlow(result.flow);
+    const next = await cancelFollowUp(result);
+    const final = next ?? result;
+    setCancelFlow(final.flow);
+    showReplies(conversation, [...result.replies, ...(next?.replies ?? [])]);
     if (final.flow === null) {
       setShowStartOptions(true);
     }
@@ -86,7 +143,7 @@ export default function ChatWidget() {
   async function askModel(conversation: ChatTurn[]) {
     const response = await chat.run({ messages: conversation });
     if (response) {
-      setMessages(withReplies(conversation, [response.reply]));
+      showReplies(conversation, [response.reply]);
       setShowStartOptions(true);
       if (response.availabilityChanged) {
         announceAvailabilityChanged();
@@ -98,11 +155,19 @@ export default function ChatWidget() {
     setShowStartOptions(false);
     const conversation: ChatTurn[] = [...messages, { role: 'user', content }];
     setMessages(conversation);
-    if (flow) {
+    if (cancelFlow) {
+      await continueCancel(conversation, answerCancelFlow(cancelFlow, content));
+      return;
+    }
+    if (bookingFlow) {
       await continueBooking(
         conversation,
-        answerBookingFlow(flow, content, new Date()),
+        answerBookingFlow(bookingFlow, content, new Date()),
       );
+      return;
+    }
+    if (content === CANCEL_OPTION && isStaff) {
+      await continueCancel(conversation, startCancelFlow());
       return;
     }
     if (content === BOOK_STAY_OPTION) {
@@ -111,20 +176,23 @@ export default function ChatWidget() {
     }
     const fixedReply = FIXED_REPLIES[content];
     if (fixedReply) {
-      setMessages(withReplies(conversation, [fixedReply]));
+      showReplies(conversation, [fixedReply]);
       return;
     }
     await askModel(conversation);
   }
 
   function quickReplies(): string[] {
-    if (sending) {
+    if (sending || cancelFlow) {
       return [];
     }
-    if (flow) {
-      return YES_NO_STEPS.includes(flow.step) ? YES_NO_OPTIONS : [];
+    if (bookingFlow) {
+      return YES_NO_STEPS.includes(bookingFlow.step) ? YES_NO_OPTIONS : [];
     }
-    return showStartOptions ? START_OPTIONS : [];
+    if (!showStartOptions) {
+      return [];
+    }
+    return isStaff ? STAFF_START_OPTIONS : START_OPTIONS;
   }
 
   return (

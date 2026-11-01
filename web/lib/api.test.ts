@@ -2,6 +2,7 @@ import {
   ApiError,
   GENERIC_ERROR_MESSAGE,
   cancelBooking,
+  findBookingByNumber,
   createBooking,
   getAvailability,
   getBookings,
@@ -330,6 +331,58 @@ describe('getBookings', () => {
     mockFetch(401, { statusCode: 401, message: 'Unauthorized' });
 
     await expect(getBookings()).rejects.toEqual(
+      new ApiError(401, [GENERIC_ERROR_MESSAGE]),
+    );
+  });
+});
+
+describe('findBookingByNumber', () => {
+  const booking = {
+    id: '6718f1d3a1b2c3d4e5f60719',
+    bookingNumber: 'K7Q2MX',
+    guestName: 'Ana Lopez',
+    guestEmail: 'ana@example.com',
+    guestPhone: '5550100123',
+    checkIn: '2026-11-12',
+    checkOut: '2026-11-14',
+    status: 'active' as const,
+    createdAt: '2026-11-01T19:00:00.000Z',
+    cancelledAt: null,
+  };
+
+  it('gets the booking by its number', async () => {
+    mockFetch(200, booking);
+
+    await expect(findBookingByNumber('K7Q2MX')).resolves.toEqual({ booking });
+    expect(global.fetch).toHaveBeenCalledWith(
+      '/api/bookings/by-number/K7Q2MX',
+      { method: 'GET', headers: { 'Content-Type': 'application/json' } },
+    );
+  });
+
+  it('returns no booking on a 404', async () => {
+    mockFetch(404, { statusCode: 404, message: 'Booking not found.' });
+
+    await expect(findBookingByNumber('ZZZZZZ')).resolves.toEqual({
+      booking: null,
+    });
+  });
+
+  it('escapes the booking number in the URL', async () => {
+    mockFetch(200, booking);
+
+    await findBookingByNumber('K7/Q2');
+
+    expect(global.fetch).toHaveBeenCalledWith(
+      '/api/bookings/by-number/K7%2FQ2',
+      expect.anything(),
+    );
+  });
+
+  it('throws an ApiError for other failures', async () => {
+    mockFetch(401, { statusCode: 401, message: 'Unauthorized' });
+
+    await expect(findBookingByNumber('K7Q2MX')).rejects.toEqual(
       new ApiError(401, [GENERIC_ERROR_MESSAGE]),
     );
   });

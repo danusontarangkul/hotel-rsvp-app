@@ -15,7 +15,7 @@
 | Field | Type | Notes |
 |---|---|---|
 | _id | ObjectId | |
-| bookingNumber | string | Unique, shown to guest |
+| bookingNumber | string | Unique index, shown to guest as the confirmation ID |
 | guestName | string | Required |
 | guestEmail | string | Required |
 | guestPhone | string | Required |

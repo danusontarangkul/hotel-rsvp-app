@@ -65,6 +65,10 @@ export type Booking = GuestDetails & {
   cancelledAt: string | null;
 };
 
+export type BookingLookup = {
+  booking: Booking | null;
+};
+
 export type ApiErrorBody = {
   statusCode: number;
   message: string | string[];

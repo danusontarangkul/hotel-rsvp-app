@@ -25,6 +25,10 @@
   4. All the details are repeated with "Shall I book it?" and Yes/No buttons.
   5. Yes → POST `/api/bookings` → "You're booked from … Your booking number is …" and the calendar reloads. No → "No problem, nothing was booked."
   6. If the booking fails because the dates were just taken, it asks for new dates; any other failure offers to try again.
+- "Cancel" shows only for logged-in staff (GET `/api/auth/me`), after the other three. It's a fixed flow that never calls the model (`components/chat/cancelFlow.ts`):
+  1. "What is the confirmation ID?" → GET `/api/bookings/by-number/:bookingNumber` (spaces removed, uppercased). Not found → it says so and asks again.
+  2. Found → shows the booking number, name, phone, email, check-in and check-out, a warning that cancelling can't be undone, and asks the staff member to type `CONFIRM` exactly. An already-cancelled booking says so and ends.
+  3. Exactly `CONFIRM` → POST `/api/bookings/:id/cancel` → "Booking … is cancelled. Its dates are open again." and the calendar and staff bookings list reload. Anything else → "No problem, nothing was cancelled."
 - `/staff/bookings` → "Cancel booking" on a row → "Cancel this booking?" modal → "Cancel booking" → the list reloads and the row shows as cancelled. "Keep booking", ×, Escape or a click outside closes the modal and changes nothing.
 - `/staff/signup` or `/staff/login` → success → `/staff/bookings`
 - `/staff/bookings` → `401` from the API → `/staff/login`
