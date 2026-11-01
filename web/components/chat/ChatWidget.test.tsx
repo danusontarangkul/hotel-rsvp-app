@@ -1,6 +1,14 @@
 import { render, screen, waitFor, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
-import { ApiError, createBooking, getAvailability, sendChat } from '@/lib/api';
+import {
+  ApiError,
+  cancelBooking,
+  createBooking,
+  findBookingByNumber,
+  getAvailability,
+  getCurrentStaff,
+  sendChat,
+} from '@/lib/api';
 import { listenForAvailabilityChanged } from '@/lib/availability-events';
 import ChatWidget from './ChatWidget';
 
@@ -9,11 +17,17 @@ jest.mock('@/lib/api', () => ({
   sendChat: jest.fn(),
   getAvailability: jest.fn(),
   createBooking: jest.fn(),
+  getCurrentStaff: jest.fn(),
+  findBookingByNumber: jest.fn(),
+  cancelBooking: jest.fn(),
 }));
 
 const mockSendChat = jest.mocked(sendChat);
 const mockGetAvailability = jest.mocked(getAvailability);
 const mockCreateBooking = jest.mocked(createBooking);
+const mockGetCurrentStaff = jest.mocked(getCurrentStaff);
+const mockFindBookingByNumber = jest.mocked(findBookingByNumber);
+const mockCancelBooking = jest.mocked(cancelBooking);
 
 const onAvailabilityChanged = jest.fn();
 let stopListening: () => void = () => {};
@@ -30,6 +44,7 @@ const REPLY = 'Unfortunately, I cannot help with that.';
 
 beforeEach(() => {
   mockSendChat.mockResolvedValue({ reply: REPLY, availabilityChanged: false });
+  mockGetCurrentStaff.mockResolvedValue(null);
 });
 
 afterEach(() => {
@@ -427,6 +442,181 @@ describe('ChatWidget', () => {
       expect(
         await screen.findByText(/those dates were just booked/),
       ).toBeVisible();
+    });
+  });
+
+  describe('Cancel', () => {
+    const booking = {
+      id: '6718f1d3a1b2c3d4e5f60719',
+      bookingNumber: 'K7Q2MX',
+      guestName: 'Ana Lopez',
+      guestEmail: 'ana@example.com',
+      guestPhone: '5550100123',
+      checkIn: '2026-11-12',
+      checkOut: '2026-11-14',
+      status: 'active' as const,
+      createdAt: '2026-11-01T19:00:00.000Z',
+      cancelledAt: null,
+    };
+
+    function messageTexts(): string[] {
+      return screen
+        .getAllByRole('listitem')
+        .map((item) => item.textContent ?? '');
+    }
+
+    function lastMessage(): string {
+      const texts = messageTexts();
+      return texts[texts.length - 1];
+    }
+
+    async function untilReplied(send: () => Promise<void>) {
+      const before = screen.getAllByRole('listitem').length;
+      await send();
+      await waitFor(() => {
+        expect(
+          screen.queryByRole('status', { name: 'Assistant is typing' }),
+        ).not.toBeInTheDocument();
+        expect(screen.getAllByRole('listitem').length).toBeGreaterThanOrEqual(
+          before + 2,
+        );
+      });
+    }
+
+    async function say(text: string) {
+      await untilReplied(() =>
+        userEvent.type(screen.getByLabelText('Message'), `${text}{Enter}`),
+      );
+    }
+
+    async function openAsStaff() {
+      mockGetCurrentStaff.mockResolvedValue({
+        id: '6718f0c2a1b2c3d4e5f60718',
+        name: 'Sam Lee',
+        email: 'sam@hotel.com',
+      });
+      await openChat();
+      await screen.findByRole('button', { name: 'Cancel' });
+    }
+
+    async function startCancel() {
+      await openAsStaff();
+      await untilReplied(() =>
+        userEvent.click(screen.getByRole('button', { name: 'Cancel' })),
+      );
+    }
+
+    beforeEach(() => {
+      mockFindBookingByNumber.mockResolvedValue({ booking });
+      mockCancelBooking.mockResolvedValue({
+        ...booking,
+        status: 'cancelled',
+        cancelledAt: '2026-11-01T20:00:00.000Z',
+      });
+    });
+
+    it('is not offered to guests', async () => {
+      await openChat();
+      await screen.findByRole('button', { name: 'Availability' });
+
+      expect(
+        screen.queryByRole('button', { name: 'Cancel' }),
+      ).not.toBeInTheDocument();
+    });
+
+    it('is offered to logged-in staff after the other options', async () => {
+      await openAsStaff();
+
+      const group = screen.getByRole('group', { name: 'Suggested questions' });
+      expect(
+        within(group)
+          .getAllByRole('button')
+          .map((button) => button.textContent),
+      ).toEqual(['Availability', 'Book', 'FAQs', 'Cancel']);
+    });
+
+    it('asks for the confirmation ID', async () => {
+      await startCancel();
+
+      expect(messageTexts().slice(-2)).toEqual([
+        'You: Cancel',
+        'Assistant: What is the confirmation ID?',
+      ]);
+    });
+
+    it('looks the booking up and shows its details with a warning', async () => {
+      await startCancel();
+
+      await say('k7q2mx');
+
+      expect(mockFindBookingByNumber).toHaveBeenCalledWith('K7Q2MX');
+      expect(lastMessage()).toContain('Name: Ana Lopez');
+      expect(lastMessage()).toContain('Phone: (555) 010-0123');
+      expect(lastMessage()).toContain('Email: ana@example.com');
+      expect(lastMessage()).toContain('Check-in: Thursday, November 12, 2026');
+      expect(lastMessage()).toContain('Check-out: Saturday, November 14, 2026');
+      expect(lastMessage()).toContain("Warning: cancelling can't be undone.");
+      expect(lastMessage()).toContain('type CONFIRM exactly');
+    });
+
+    it('cancels after CONFIRM and says so', async () => {
+      await startCancel();
+      await say('K7Q2MX');
+
+      await say('CONFIRM');
+
+      expect(mockCancelBooking).toHaveBeenCalledWith(booking.id);
+      expect(lastMessage()).toBe(
+        'Assistant: Booking K7Q2MX is cancelled. Its dates are open again.',
+      );
+      expect(onAvailabilityChanged).toHaveBeenCalledTimes(1);
+    });
+
+    it('keeps the booking after anything other than CONFIRM', async () => {
+      await startCancel();
+      await say('K7Q2MX');
+
+      await say('confirm');
+
+      expect(mockCancelBooking).not.toHaveBeenCalled();
+      expect(lastMessage()).toBe(
+        'Assistant: No problem, nothing was cancelled.',
+      );
+    });
+
+    it('asks again for an unknown confirmation ID', async () => {
+      mockFindBookingByNumber.mockResolvedValue({ booking: null });
+      await startCancel();
+
+      await say('ZZZZZZ');
+
+      expect(lastMessage()).toBe(
+        "Assistant: I couldn't find a booking with confirmation ID ZZZZZZ. What is the confirmation ID?",
+      );
+    });
+
+    it('never asks the model during the cancel steps', async () => {
+      await startCancel();
+      await say('K7Q2MX');
+      await say('CONFIRM');
+
+      expect(mockSendChat).not.toHaveBeenCalled();
+    });
+
+    it('shows each message once', async () => {
+      await startCancel();
+      await say('K7Q2MX');
+      await say('CONFIRM');
+
+      expect(messageTexts()).toHaveLength(7);
+    });
+
+    it('offers the starting options again after cancelling', async () => {
+      await startCancel();
+      await say('K7Q2MX');
+      await say('CONFIRM');
+
+      expect(screen.getByRole('button', { name: 'Cancel' })).toBeVisible();
     });
   });
 

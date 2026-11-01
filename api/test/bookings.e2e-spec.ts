@@ -273,6 +273,92 @@ describe('GET /api/bookings', () => {
   });
 });
 
+describe('GET /api/bookings/by-number/:bookingNumber', () => {
+  let app: INestApplication<App>;
+  let clearDatabase: () => Promise<void>;
+
+  beforeAll(async () => {
+    ({ app, clearDatabase } = await createTestApp({
+      now: NOON_IN_LOS_ANGELES_ON_OCTOBER_25,
+    }));
+  });
+
+  afterEach(async () => {
+    await clearDatabase();
+  });
+
+  afterAll(async () => {
+    await app.close();
+  });
+
+  async function staffCookie(): Promise<string> {
+    const response = await request(app.getHttpServer())
+      .post('/api/auth/signup')
+      .send({ name: 'Sam Lee', email: 'sam@hotel.com', password: 'at-least-8' })
+      .expect(201);
+    const [cookie] = response.get('Set-Cookie') ?? [];
+    return cookie.split(';')[0];
+  }
+
+  async function bookedNumber(): Promise<string> {
+    const response = await request(app.getHttpServer())
+      .post('/api/bookings')
+      .send(validBooking)
+      .expect(201);
+    return (response.body as { bookingNumber: string }).bookingNumber;
+  }
+
+  function findByNumber(bookingNumber: string, cookie?: string) {
+    const call = request(app.getHttpServer()).get(
+      `/api/bookings/by-number/${bookingNumber}`,
+    );
+    return cookie ? call.set('Cookie', cookie) : call;
+  }
+
+  it('returns 200 with the booking', async () => {
+    const cookie = await staffCookie();
+    const bookingNumber = await bookedNumber();
+
+    const response = await findByNumber(bookingNumber, cookie).expect(200);
+
+    expect(response.body).toEqual({
+      id: expect.any(String) as string,
+      bookingNumber,
+      guestName: 'Maya Chen',
+      guestEmail: 'maya.chen@example.com',
+      guestPhone: '4155550349',
+      checkIn: '2026-11-08',
+      checkOut: '2026-11-11',
+      status: 'active',
+      createdAt: expect.any(String) as string,
+      cancelledAt: null,
+    });
+  });
+
+  it('finds the booking from a lowercase booking number', async () => {
+    const cookie = await staffCookie();
+    const bookingNumber = await bookedNumber();
+
+    await findByNumber(bookingNumber.toLowerCase(), cookie).expect(200);
+  });
+
+  it('returns 404 for an unknown booking number', async () => {
+    const cookie = await staffCookie();
+
+    const response = await findByNumber('ZZZZZZ', cookie).expect(404);
+
+    expect((response.body as ErrorBody).message).toBe('Booking not found.');
+  });
+
+  it('returns 401 without a login cookie', async () => {
+    const bookingNumber = await bookedNumber();
+
+    const response = await findByNumber(bookingNumber).expect(401);
+
+    expect((response.body as ErrorBody).message).toBe('Unauthorized');
+  });
+});
+
 describe('POST /api/bookings/:id/cancel', () => {
   let app: INestApplication<App>;
   let clearDatabase: () => Promise<void>;

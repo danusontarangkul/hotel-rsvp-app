@@ -1,8 +1,25 @@
-import { generateBookingNumber } from './booking-number';
+import {
+  generateBookingNumber,
+  normalizeBookingNumber,
+} from './booking-number';
 import {
   BOOKING_NUMBER_ALPHABET,
   BOOKING_NUMBER_LENGTH,
 } from './bookings.constants';
+
+describe('normalizeBookingNumber', () => {
+  it('uppercases the booking number', () => {
+    expect(normalizeBookingNumber('k7q2mx')).toBe('K7Q2MX');
+  });
+
+  it('removes spaces anywhere in it', () => {
+    expect(normalizeBookingNumber('  K7Q 2MX ')).toBe('K7Q2MX');
+  });
+
+  it('leaves a clean booking number alone', () => {
+    expect(normalizeBookingNumber('K7Q2MX')).toBe('K7Q2MX');
+  });
+});
 
 describe('generateBookingNumber', () => {
   it('has the booking number length', () => {

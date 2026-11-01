@@ -24,6 +24,7 @@ import type { BookingRecord, NewBooking } from './bookings.types';
 import { Night, NightSchema } from './night.schema';
 
 jest.mock('./booking-number', () => ({
+  ...jest.requireActual<typeof import('./booking-number')>('./booking-number'),
   generateBookingNumber: jest.fn(),
 }));
 
@@ -234,6 +235,52 @@ describe('BookingsService', () => {
       await expect(service.findAll()).resolves.toMatchObject([
         { status: 'cancelled', cancelledAt: '2026-10-25T20:00:00.000Z' },
       ]);
+    });
+  });
+
+  describe('findByBookingNumber', () => {
+    it('returns the booking in the API shape', async () => {
+      const { bookingNumber } = await service.create(stay);
+      const saved = await savedBooking(bookingNumber);
+
+      await expect(service.findByBookingNumber(bookingNumber)).resolves.toEqual(
+        {
+          id: saved._id.toString(),
+          bookingNumber,
+          guestName: 'Maya Chen',
+          guestEmail: 'maya.chen@example.com',
+          guestPhone: '4155550349',
+          checkIn: '2026-11-08',
+          checkOut: '2026-11-11',
+          status: 'active',
+          createdAt: saved.createdAt.toISOString(),
+          cancelledAt: null,
+        },
+      );
+    });
+
+    it('finds the booking whatever the letter case and spacing', async () => {
+      const { bookingNumber } = await service.create(stay);
+
+      await expect(
+        service.findByBookingNumber(` ${bookingNumber.toLowerCase()} `),
+      ).resolves.toMatchObject({ bookingNumber });
+    });
+
+    it('finds a cancelled booking too', async () => {
+      const { bookingNumber } = await service.create(stay);
+      const saved = await savedBooking(bookingNumber);
+      await service.cancel(saved._id.toString(), STAFF_ID);
+
+      await expect(
+        service.findByBookingNumber(bookingNumber),
+      ).resolves.toMatchObject({ status: 'cancelled' });
+    });
+
+    it('says not found for an unknown booking number', async () => {
+      await expect(service.findByBookingNumber('ZZZZZZ')).rejects.toEqual(
+        new NotFoundException(BOOKING_NOT_FOUND),
+      );
     });
   });
 

@@ -24,6 +24,14 @@ export class BookingsController {
     return this.bookingsService.findAll();
   }
 
+  @Get('by-number/:bookingNumber')
+  @UseGuards(AuthGuard)
+  findByBookingNumber(
+    @Param('bookingNumber') bookingNumber: string,
+  ): Promise<BookingResponse> {
+    return this.bookingsService.findByBookingNumber(bookingNumber);
+  }
+
   @Post()
   create(@Body() dto: CreateBookingDto): Promise<CreateBookingResponse> {
     return this.bookingsService.create(dto);

@@ -4,6 +4,7 @@ import { useState } from 'react';
 import LoadError from '@/components/shared/LoadError';
 import { useBookings } from '@/hooks/useBookings';
 import { useCancelBooking } from '@/hooks/useCancelBooking';
+import { useOnAvailabilityChanged } from '@/hooks/useOnAvailabilityChanged';
 import { useRedirectOnUnauthorized } from '@/hooks/useRedirectOnUnauthorized';
 import type { Booking } from '@/lib/types';
 import BookingsTable from './BookingsTable';
@@ -16,6 +17,7 @@ export default function BookingsSection() {
   const [selected, setSelected] = useState<Booking | null>(null);
 
   useRedirectOnUnauthorized(bookings.error, cancel.error);
+  useOnAvailabilityChanged(bookings.refetch);
 
   async function handleConfirm() {
     if (!selected) {

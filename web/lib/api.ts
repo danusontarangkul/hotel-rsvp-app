@@ -3,6 +3,7 @@ import type {
   Availability,
   Booking,
   BookingConfirmation,
+  BookingLookup,
   ChatInput,
   ChatReply,
   CreateBookingInput,
@@ -19,6 +20,7 @@ const CREATE_BOOKING_ERROR_STATUSES = [400, 409] as const;
 const CANCEL_BOOKING_ERROR_STATUSES = [409] as const;
 const CURRENT_STAFF_ERROR_STATUSES = [401] as const;
 const CHAT_ERROR_STATUSES = [400, 503] as const;
+const FIND_BOOKING_ERROR_STATUSES = [404] as const;
 
 export class ApiError extends Error {
   readonly status: number;
@@ -151,6 +153,24 @@ export function sendChat(input: ChatInput): Promise<ChatReply> {
     { method: 'POST', body: JSON.stringify(input) },
     CHAT_ERROR_STATUSES,
   );
+}
+
+export async function findBookingByNumber(
+  bookingNumber: string,
+): Promise<BookingLookup> {
+  try {
+    const booking = await request<Booking>(
+      `/api/bookings/by-number/${encodeURIComponent(bookingNumber)}`,
+      { method: 'GET' },
+      FIND_BOOKING_ERROR_STATUSES,
+    );
+    return { booking };
+  } catch (error) {
+    if (error instanceof ApiError && error.status === 404) {
+      return { booking: null };
+    }
+    throw error;
+  }
 }
 
 export function cancelBooking(id: string): Promise<Booking> {

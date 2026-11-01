@@ -4,6 +4,10 @@ import {
   BOOKING_NUMBER_LENGTH,
 } from './bookings.constants';
 
+export function normalizeBookingNumber(value: string): string {
+  return value.replace(/\s/g, '').toUpperCase();
+}
+
 export function generateBookingNumber(): string {
   return Array.from(
     { length: BOOKING_NUMBER_LENGTH },

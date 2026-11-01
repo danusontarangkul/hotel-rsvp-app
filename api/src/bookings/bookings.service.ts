@@ -20,7 +20,10 @@ import { HOTEL_TIME_ZONE } from '../common/constants';
 import { addDays, nightsBetween, todayIn } from '../common/dates';
 import { normalizeEmail } from '../common/email';
 import { isDuplicateKeyError } from '../common/mongo-errors';
-import { generateBookingNumber } from './booking-number';
+import {
+  generateBookingNumber,
+  normalizeBookingNumber,
+} from './booking-number';
 import { toBookingResponse } from './booking-response';
 import { Booking } from './booking.schema';
 import {
@@ -72,6 +75,17 @@ export class BookingsService {
       .lean<BookingRecord[]>()
       .exec();
     return bookings.map(toBookingResponse);
+  }
+
+  async findByBookingNumber(bookingNumber: string): Promise<BookingResponse> {
+    const booking = await this.bookingModel
+      .findOne({ bookingNumber: normalizeBookingNumber(bookingNumber) })
+      .lean<BookingRecord>()
+      .exec();
+    if (!booking) {
+      throw new NotFoundException(BOOKING_NOT_FOUND);
+    }
+    return toBookingResponse(booking);
   }
 
   async create(booking: NewBooking): Promise<CreateBookingResponse> {

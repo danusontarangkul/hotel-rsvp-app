@@ -1,6 +1,7 @@
-import { render, screen, waitFor, within } from '@testing-library/react';
+import { act, render, screen, waitFor, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { ApiError, cancelBooking, getBookings } from '@/lib/api';
+import { announceAvailabilityChanged } from '@/lib/availability-events';
 import BookingsSection from './BookingsSection';
 import { activeBooking, cancelledBooking } from './testBookings';
 
@@ -24,6 +25,18 @@ afterEach(() => {
 });
 
 describe('BookingsSection', () => {
+  it('reloads the bookings when the chat cancels one', async () => {
+    mockGetBookings.mockResolvedValue([activeBooking]);
+    render(<BookingsSection />);
+    await screen.findByText(activeBooking.guestName);
+
+    act(() => {
+      announceAvailabilityChanged();
+    });
+
+    await waitFor(() => expect(mockGetBookings).toHaveBeenCalledTimes(2));
+  });
+
   it('shows a loading skeleton until the bookings arrive', () => {
     mockGetBookings.mockReturnValue(new Promise(() => {}));
     render(<BookingsSection />);

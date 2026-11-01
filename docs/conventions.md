@@ -17,7 +17,7 @@
 - `chat/ChatWidget` is added per page (`/` and `/staff/bookings`), not in `layout.tsx`. It holds the chat history in state, sends the whole history with `useChat` on each message, and switches between the "Open chat" button and `ChatPanel`. Each message bubble is a `ChatMessage`.
 - When a chat reply has `availabilityChanged: true`, `ChatWidget` calls `announceAvailabilityChanged()` (`lib/availability-events.ts`). Anything showing availability listens with `useOnAvailabilityChanged(refetch)`, like `BookingSection`, so the chat and the calendar don't need to know about each other.
 - Chat copy lives in `components/chat/chatCopy.ts`.
-- The "Book" chat flow is pure functions in `components/chat/bookingFlow.ts` (step in, step and replies out), so each step is tested without rendering. `ChatWidget` runs the API calls the flow asks for (`useCheckAvailability`, `useCreateBooking`).
+- The "Book" chat flow is pure functions in `components/chat/bookingFlow.ts` (step in, step and replies out), so each step is tested without rendering. `ChatWidget` runs the API calls the flow asks for (`useCheckAvailability`, `useCreateBooking`). The staff "Cancel" flow works the same way in `components/chat/cancelFlow.ts` (`useFindBooking`, `useCancelBooking`).
 - No `loading.tsx`, `error.tsx` or middleware.
 - Tests (`*.test.tsx`, `*.test.ts`) sit next to the file they test and run with Jest and React Testing Library.
 
