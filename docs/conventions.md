@@ -29,6 +29,7 @@
 - `staff/` has no controller; only `auth/` uses it.
 - `chat/` calls `BookingsService` for every tool, so chat bookings and cancels follow the same rules as the other endpoints. `BookingsModule` exports `BookingsService` for it.
 - `chat-faq.ts` (`CHAT_FAQ`) is the FAQ text sent to the model with every request. Edit it there when booking rules change.
+- `ChatService` talks to the model only through the injected `CHAT_MODEL` provider (`OllamaChatModel`), never the `ollama` package directly. Unit tests pass a fake model, and e2e tests call `createTestApp({ chatModel })`, so no test needs Ollama running.
 - `optional-auth.guard.ts` (`OptionalAuthGuard`) reads the `token` cookie like `AuthGuard` but never returns `401`; with no valid cookie, `staffId` is left unset and the chat treats the user as a guest.
 - Booking rules live in `bookings.service.ts`.
 - "Now" comes from the injected `CLOCK` provider (`common/clock.ts`), never `new Date()` in a service. Tests replace it with a fixed time: unit tests provide their own `CLOCK`, and e2e tests call `createTestApp({ now })`.

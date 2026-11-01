@@ -75,6 +75,50 @@ I built this with Claude and Claude Code as a collaborator, while making the dec
 - [Conventions](docs/conventions.md): coding conventions for both apps.
 - [Manual Tests](docs/manual-tests.md): checklist for testing every functional requirement by hand, including error cases.
 
+## Run locally
+
+You need Node.js 22, a MongoDB connection string (MongoDB Atlas free tier works), and Ollama for the chat (`brew install ollama` on a Mac).
+
+**1. Install dependencies** in each app:
+
+```
+cd api && npm install
+cd web && npm install
+```
+
+**2. Create `api/.env`:**
+
+```
+MONGODB_URI=<your MongoDB connection string>
+JWT_SECRET=<a long random string, see below>
+OLLAMA_HOST=http://localhost:11434
+OLLAMA_MODEL=qwen3:8b
+```
+
+To make a `JWT_SECRET`, run this and paste the output after `JWT_SECRET=`:
+
+```
+node -e "console.log(require('crypto').randomBytes(32).toString('hex'))"
+```
+
+`OLLAMA_HOST` and `OLLAMA_MODEL` are optional and default to the values above. The web app needs no `.env`; it sends `/api/*` to `http://localhost:3001`.
+
+**3. Start each part in its own terminal.** Closing a terminal (or Ctrl+C) stops that part.
+
+| Terminal | Command | Runs |
+|---|---|---|
+| 1 | `cd api && npm run ollama` | Ollama, the chat model server, on port 11434 |
+| 2 | `cd api && npm run dev` | The API on http://localhost:3001 |
+| 3 | `cd web && npm run dev` | The web app on http://localhost:3000 |
+
+**4. First time only, download the chat model** (about 5 GB) while Ollama is running:
+
+```
+cd api && npm run ollama:pull
+```
+
+Without Ollama the app still works; the chat just says it's unavailable.
+
 ## Author
 
 Created by [David Anusontarangkul](https://github.com/danusontarangkul).

@@ -81,9 +81,44 @@ describe('ChatWidget', () => {
       'Is Nov 3 open?{Enter}',
     );
 
-    const items = await screen.findAllByRole('listitem');
+    await screen.findByText(REPLY, { exact: false });
+    const items = screen.getAllByRole('listitem');
     expect(items).toHaveLength(3);
     expect(items[2]).toHaveTextContent(`Assistant: ${REPLY}`);
+  });
+
+  it('shows the typing indicator while waiting for the reply', async () => {
+    mockSendChat.mockReturnValue(new Promise(() => {}));
+    await openChat();
+
+    await userEvent.type(screen.getByLabelText('Message'), 'Hello{Enter}');
+
+    expect(
+      screen.getByRole('status', { name: 'Assistant is typing' }),
+    ).toBeInTheDocument();
+  });
+
+  it('replaces the typing indicator with the reply', async () => {
+    await openChat();
+
+    await userEvent.type(screen.getByLabelText('Message'), 'Hello{Enter}');
+    await screen.findByText(REPLY, { exact: false });
+
+    expect(
+      screen.queryByRole('status', { name: 'Assistant is typing' }),
+    ).not.toBeInTheDocument();
+  });
+
+  it('hides the typing indicator when sending fails', async () => {
+    mockSendChat.mockRejectedValue(new ApiError(503, ['Chat is unavailable.']));
+    await openChat();
+
+    await userEvent.type(screen.getByLabelText('Message'), 'Hello{Enter}');
+    await screen.findByText('Chat is unavailable.');
+
+    expect(
+      screen.queryByRole('status', { name: 'Assistant is typing' }),
+    ).not.toBeInTheDocument();
   });
 
   it('marks Send busy while waiting for the reply', async () => {

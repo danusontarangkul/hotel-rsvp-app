@@ -9,6 +9,15 @@ export type ChatMessage = {
   content: string;
 };
 
+export type ModelMessage = {
+  role: 'system' | ChatRole;
+  content: string;
+};
+
+export type ChatModel = {
+  reply: (messages: ModelMessage[]) => Promise<string>;
+};
+
 export type ChatResponse = {
   reply: string;
   availabilityChanged: boolean;

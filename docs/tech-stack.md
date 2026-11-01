@@ -93,8 +93,8 @@ Next.js forwards `/api/*` to NestJS with a rewrite in `next.config`.
 | api | `JWT_SECRET` | Signs login tokens |
 | api | `PORT` | Local port only (e.g. `3001`); not used on Vercel |
 | api | `NODE_ENV` | `production` (set by Vercel) makes the login cookie `Secure` |
-| api | `OLLAMA_HOST` | Ollama server address (e.g. `http://localhost:11434`) |
-| api | `OLLAMA_MODEL` | Model name (e.g. `qwen3:8b`) |
+| api | `OLLAMA_HOST` | Ollama server address. Optional; defaults to `http://localhost:11434` |
+| api | `OLLAMA_MODEL` | Model name. Optional; defaults to `qwen3:8b` |
 | web | `API_URL` | Target of the `/api/*` rewrite (e.g. `http://localhost:3001`) |
 
 ## CI and deployment

@@ -6,6 +6,7 @@ export const MESSAGES_LABEL = 'Messages';
 export const MESSAGE_INPUT_LABEL = 'Message';
 export const MESSAGE_PLACEHOLDER = 'Ask about dates or booking';
 export const SEND_LABEL = 'Send';
+export const TYPING_LABEL = 'Assistant is typing';
 export const SENDER_LABELS = {
   user: 'You',
   assistant: 'Assistant',

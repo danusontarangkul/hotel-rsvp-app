@@ -1,3 +1,7 @@
+export const CHAT_MODEL = 'CHAT_MODEL';
+export const DEFAULT_OLLAMA_HOST = 'http://localhost:11434';
+export const DEFAULT_OLLAMA_MODEL = 'qwen3:8b';
+
 export const CHAT_ROLES = ['user', 'assistant'] as const;
 export const MAX_MESSAGE_LENGTH = 200;
 export const MAX_CHAT_MESSAGES = 10;

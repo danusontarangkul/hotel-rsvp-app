@@ -12,6 +12,23 @@
   --color-primary: #294f40;
   --color-on-primary: #ffffff;
   --color-error: #a43e32;
+
+  --animate-typing-dot: typing-dot 1.2s ease-in-out infinite;
+  --animate-typing-dot-second: typing-dot 1.2s ease-in-out 0.2s infinite;
+  --animate-typing-dot-third: typing-dot 1.2s ease-in-out 0.4s infinite;
+
+  @keyframes typing-dot {
+    0%,
+    60%,
+    100% {
+      opacity: 0.3;
+      transform: translateY(0);
+    }
+    30% {
+      opacity: 1;
+      transform: translateY(-3px);
+    }
+  }
 }
 
 @theme inline {

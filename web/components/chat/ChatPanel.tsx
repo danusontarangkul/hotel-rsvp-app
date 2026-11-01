@@ -6,6 +6,7 @@ import { useScrollToBottom } from '@/hooks/useScrollToBottom';
 import type { ChatTurn } from '@/lib/types';
 import ChatComposer from './ChatComposer';
 import ChatMessage from './ChatMessage';
+import ChatTypingIndicator from './ChatTypingIndicator';
 import { CHAT_TITLE, MESSAGES_LABEL, MINIMIZE_CHAT_LABEL } from './chatCopy';
 
 type ChatPanelProps = {
@@ -23,7 +24,9 @@ export default function ChatPanel({
   sending = false,
   errors = [],
 }: ChatPanelProps) {
-  const listRef = useScrollToBottom<HTMLOListElement>(messages);
+  const listRef = useScrollToBottom<HTMLOListElement>(
+    `${messages.length}:${sending}`,
+  );
 
   return (
     <section
@@ -53,6 +56,7 @@ export default function ChatPanel({
             content={message.content}
           />
         ))}
+        {sending && <ChatTypingIndicator />}
       </ol>
       <div className="border-t border-border px-4 pt-3">
         <ChatComposer onSend={onSend} sending={sending} errors={errors} />
