@@ -14,7 +14,8 @@
 - Staff pages call `useRedirectOnUnauthorized(...errors)` so a `401` from any of their requests goes to `/staff/login`. Forms that expect a `401` (log in) don't use it.
 - Tables use `shared/Table.tsx`, `shared/TableRow.tsx` and `shared/TableCell.tsx`. On screens narrower than `lg` each row shows as a card: the header row is hidden and each `TableCell` shows its `label`. Nothing scrolls sideways.
 - `components/shared/` holds only generic pieces with no booking or staff logic.
-- The chat history lives in `useChat` state only and is sent in full with each message.
+- `chat/ChatWidget` is added per page (`/` and `/staff/bookings`), not in `layout.tsx`. It holds the chat history in state and switches between the "Open chat" button and `ChatPanel`. Each message bubble is a `ChatMessage`.
+- Chat copy lives in `components/chat/chatCopy.ts`.
 - No `loading.tsx`, `error.tsx` or middleware.
 - Tests (`*.test.tsx`, `*.test.ts`) sit next to the file they test and run with Jest and React Testing Library.
 

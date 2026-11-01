@@ -40,7 +40,9 @@ Not included in this build.
 
 ## Chat assistant
 
-- Chat history only lasts for the page visit.
+- Chat history only lasts for the page visit. It isn't saved to local storage, so a refresh clears it.
+- No attachments in the chat.
+- The message box is one line and doesn't grow as you type.
 - The chat can't change dates or guest details.
 - Each reply shows up all at once when it's ready.
 - The FAQ is fixed text in the code.

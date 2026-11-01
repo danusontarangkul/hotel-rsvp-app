@@ -6,7 +6,14 @@ type ButtonProps = Omit<
   'className'
 > & {
   variant?:
-    'primary' | 'secondary' | 'danger' | 'danger-text' | 'ghost' | 'icon';
+    | 'primary'
+    | 'secondary'
+    | 'danger'
+    | 'danger-text'
+    | 'ghost'
+    | 'icon'
+    | 'round'
+    | 'round-small';
   loading?: boolean;
 };
 
@@ -18,6 +25,8 @@ const VARIANTS: Record<NonNullable<ButtonProps['variant']>, string> = {
   'danger-text': 'rounded text-sm font-medium text-error',
   ghost: 'rounded px-2 py-1 text-sm font-medium text-foreground',
   icon: 'rounded p-1 text-muted',
+  round: 'rounded-full bg-primary p-4 text-on-primary shadow-lg',
+  'round-small': 'rounded-full bg-primary p-1.5 text-on-primary',
 };
 
 export default function Button({
