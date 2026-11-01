@@ -26,9 +26,9 @@ Every request is built from scratch. The model remembers nothing between request
 
 | Part | Source |
 |---|---|
-| System prompt | `api/src/chat/chat-system-prompt.ts` (written later) |
-| Role | "guest" with no valid login cookie, "staff" with one |
-| Today's date | From `CLOCK`, in the hotel time zone, e.g. `Today is 2026-10-31.` |
+| System prompt | `CHAT_SYSTEM_PROMPT` in `api/src/chat/chat-system-prompt.ts`: rules and the FAQ |
+| Role | `AUDIENCE_PROMPTS.guest` with no valid login cookie, `AUDIENCE_PROMPTS.staff` with one |
+| Today's date | From `CLOCK`, in the hotel time zone, after `TODAY_PROMPT_PREFIX`, e.g. `Today is 2026-10-31.` |
 | FAQ | `CHAT_FAQ` in `api/src/chat/chat-faq.ts`, sent every time |
 | Messages | The last `MAX_CHAT_MESSAGES` (10) messages from the browser |
 | Tools | Guest: `get_availability`, `create_booking`. Staff: those plus `cancel_booking`, `get_bookings` |
