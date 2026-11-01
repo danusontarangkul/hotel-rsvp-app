@@ -27,6 +27,9 @@ Next.js forwards `/api/*` to NestJS with a rewrite in `next.config`.
 | Data access | Mongoose via `@nestjs/mongoose` |
 | Auth | `@nestjs/jwt` + bcrypt, JWT in an httpOnly cookie |
 | Dates | date-fns (both apps) |
+| Chat AI | Ollama, run locally only |
+| AI model | `qwen3:8b` (supports tool calling) |
+| AI client | `ollama` npm package, in `api/` only |
 | Testing | Jest, `@nestjs/testing`, Supertest, mongodb-memory-server, React Testing Library |
 | Linting and formatting | ESLint + Prettier |
 | Config | Environment variables, `@nestjs/config` |
@@ -60,12 +63,20 @@ Next.js forwards `/api/*` to NestJS with a rewrite in `next.config`.
 - Cancelling marks the booking cancelled and deletes its nights in one transaction.
 - Dates are stored as `YYYY-MM-DD` strings.
 
+## Chat
+
+- Ollama runs on the developer's machine. Before `npm run dev`, install Ollama and run `ollama pull qwen3:8b`.
+- The model uses tool calling to check availability, book, cancel and look up bookings.
+- The chat only works locally. On Vercel there is no Ollama, so the chat shows as unavailable and the rest of the app still works.
+- Reply speed depends on the machine running Ollama.
+
 ## Testing
 
 - **api:** Jest, `@nestjs/testing` for unit tests, Supertest for end-to-end tests.
 - **Database in tests:** mongodb-memory-server in replica set mode (`MongoMemoryReplSet`) so transactions work.
 - **api Jest flag:** `npm test` and `npm run test:e2e` run with `NODE_OPTIONS=--experimental-vm-modules`. The MongoDB driver loads Node's `os` module with a dynamic `import()`; without the flag that import fails inside Jest and MongoDB 8 rejects the connection ("Missing required sub-document 'driver'").
 - **web:** Jest with the `next/jest` preset and React Testing Library.
+- **Chat in tests:** the Ollama client is mocked, so tests and CI don't need Ollama running.
 
 ## Linting and formatting
 
@@ -82,6 +93,8 @@ Next.js forwards `/api/*` to NestJS with a rewrite in `next.config`.
 | api | `JWT_SECRET` | Signs login tokens |
 | api | `PORT` | Local port only (e.g. `3001`); not used on Vercel |
 | api | `NODE_ENV` | `production` (set by Vercel) makes the login cookie `Secure` |
+| api | `OLLAMA_HOST` | Ollama server address (e.g. `http://localhost:11434`) |
+| api | `OLLAMA_MODEL` | Model name (e.g. `qwen3:8b`) |
 | web | `API_URL` | Target of the `/api/*` rewrite (e.g. `http://localhost:3001`) |
 
 ## CI and deployment
@@ -104,4 +117,4 @@ Vercel deploys both apps from GitHub as two projects: `web/` (root directory `we
 
 **web/:** Next.js, Tailwind CSS, react-day-picker, React Testing Library, `@testing-library/user-event`
 
-**api/:** NestJS, class-validator, class-transformer, `@nestjs/config`, `@nestjs/mongoose`, Mongoose, `@nestjs/jwt`, bcrypt, cookie-parser, `@nestjs/testing`, Supertest, mongodb-memory-server
+**api/:** NestJS, class-validator, class-transformer, `@nestjs/config`, `@nestjs/mongoose`, Mongoose, `@nestjs/jwt`, bcrypt, cookie-parser, `ollama`, `@nestjs/testing`, Supertest, mongodb-memory-server

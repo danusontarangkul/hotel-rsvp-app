@@ -69,7 +69,10 @@ I built this with Claude and Claude Code as a collaborator, while making the dec
 - [Tech Stack](docs/tech-stack.md): languages, frameworks, services and tools.
 - [Data Model](docs/data-model.md): database collections and fields.
 - [API Contract](docs/api-contract.md): API endpoints with requests and responses.
-- [File Structure](docs/file-structure.md): front end and back end folders and files.
+- [Chat Spec](docs/chat-spec.md): how the chat assistant works, its limits and guardrails.
+- [File Structure](docs/file-structure.md): front end and back end folders.
+- [Pages](docs/pages.md): routes and page flow.
+- [Conventions](docs/conventions.md): coding conventions for both apps.
 - [Manual Tests](docs/manual-tests.md): checklist for testing every functional requirement by hand, including error cases.
 
 ## Author

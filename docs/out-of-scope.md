@@ -30,3 +30,20 @@ Not included in this build.
 | Item | Now | Future |
 |---|---|---|
 | Rate limiting | No limits on requests. | Limit requests per IP, especially login, sign-up and booking. |
+
+## Other
+
+- No email.
+- Guests can't change or cancel bookings.
+- No password reset.
+- No scaling, backups, monitoring or compliance.
+
+## Chat assistant
+
+- Chat history only lasts for the page visit.
+- The chat can't change dates or guest details.
+- Each reply shows up all at once when it's ready.
+- The FAQ is fixed text in the code.
+- No limit on chat messages.
+- English only.
+- No tracking of chat cost or errors.
