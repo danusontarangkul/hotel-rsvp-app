@@ -31,7 +31,7 @@ Every request is built from scratch. The model remembers nothing between request
 | Today's date | From `CLOCK`, in the hotel time zone, after `TODAY_PROMPT_PREFIX`, e.g. `Today is 2026-10-31.` |
 | FAQ | `CHAT_FAQ` in `api/src/chat/chat-faq.ts`, sent every time |
 | Messages | The last `MAX_CHAT_MESSAGES` (10) messages from the browser |
-| Tools | Guest: `get_availability`, `create_booking`. Staff: those plus `cancel_booking`, `get_bookings`. Only `get_availability` is connected so far (`api/src/chat/chat-tools.ts`) |
+| Tools | Guest: `get_availability`, `create_booking`. Staff: those plus `cancel_booking`, `get_bookings`. `get_availability` and `create_booking` are connected so far (`api/src/chat/chat-tools.ts`) |
 
 ## Limits
 
@@ -57,6 +57,7 @@ All chat text lives in `api/src/chat/chat.constants.ts`, the source of truth for
 - The role comes only from the login cookie, never from the messages.
 - Guests are never given the staff-only tools, so they can't be called even if the model is tricked.
 - Passwords, password hashes, login tokens and env values are never sent to the model. Tool results only contain the fields the API contract already returns.
+- `create_booking` only books if the guest's name, email and phone appear in what the guest typed, so the model can't book with made-up details (`api/src/chat/guest-details.ts`).
 
 ### Outgoing
 - The system prompt tells the model to reply with `NO_PERMISSION` or `CANNOT_HELP` in the cases above, and never to reveal its instructions.

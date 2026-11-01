@@ -5,9 +5,11 @@ import {
   EMPTY_SELECTION,
   formatDateRange,
   formatDisplayDate,
+  formatLongDate,
   isBooked,
   isUnavailable,
   nightsBetween,
+  parseChatDate,
   selectDate,
   stayIncludesBookedNight,
   toDateString,
@@ -17,6 +19,55 @@ const availability = {
   firstBookableDate: '2026-10-26',
   bookedNights: ['2026-11-03', '2026-11-04', '2026-11-05'],
 };
+
+const NOVEMBER_1_2026 = new Date(2026, 10, 1, 12);
+
+describe('parseChatDate', () => {
+  it.each([
+    ['Nov 12', '2026-11-12'],
+    ['November 12', '2026-11-12'],
+    ['nov 12th', '2026-11-12'],
+    ['Nov. 12', '2026-11-12'],
+    ['12 Nov', '2026-11-12'],
+    ['11/12', '2026-11-12'],
+    ['11-12', '2026-11-12'],
+    ['Thursday, November 12', '2026-11-12'],
+    ['  Nov 12  ', '2026-11-12'],
+  ])('reads "%s" as this year', (text, expected) => {
+    expect(parseChatDate(text, NOVEMBER_1_2026)).toBe(expected);
+  });
+
+  it.each([
+    ['2027-01-05', '2027-01-05'],
+    ['1/5/2027', '2027-01-05'],
+    ['1/5/27', '2027-01-05'],
+    ['Jan 5, 2027', '2027-01-05'],
+    ['January 5th 2027', '2027-01-05'],
+  ])('reads "%s" with its year', (text, expected) => {
+    expect(parseChatDate(text, NOVEMBER_1_2026)).toBe(expected);
+  });
+
+  it('uses next year for a date without a year that has already passed', () => {
+    expect(parseChatDate('Jan 5', NOVEMBER_1_2026)).toBe('2027-01-05');
+  });
+
+  it('uses this year for today', () => {
+    expect(parseChatDate('Nov 1', NOVEMBER_1_2026)).toBe('2026-11-01');
+  });
+
+  it.each(['tomorrow', 'next week', 'Nov 31', '13/40', '', 'hello'])(
+    'returns null for "%s"',
+    (text) => {
+      expect(parseChatDate(text, NOVEMBER_1_2026)).toBeNull();
+    },
+  );
+});
+
+describe('formatLongDate', () => {
+  it('writes the weekday, month, day and year', () => {
+    expect(formatLongDate('2026-11-12')).toBe('Thursday, November 12, 2026');
+  });
+});
 
 describe('toDateString', () => {
   it('formats a date as YYYY-MM-DD', () => {

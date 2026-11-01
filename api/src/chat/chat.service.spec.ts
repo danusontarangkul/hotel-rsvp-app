@@ -9,6 +9,7 @@ import {
   CANNOT_HELP,
   CHAT_UNAVAILABLE,
   CONTENT_TOO_LONG,
+  CREATE_BOOKING_TOOL,
   GET_AVAILABILITY_TOOL,
   LAST_MESSAGE_NOT_FROM_USER,
   MAX_CHAT_MESSAGES,
@@ -23,6 +24,7 @@ import type {
   ModelReply,
   ModelTool,
   ModelToolCall,
+  ToolOutcome,
 } from './chat.types';
 
 const NOON_IN_LOS_ANGELES_ON_NOVEMBER_1 = new Date('2026-11-01T19:00:00.000Z');
@@ -45,8 +47,13 @@ const modelReply = jest.fn<
 >();
 const model: ChatModel = { reply: modelReply };
 
-const runTool = jest.fn<Promise<string>, [ModelToolCall]>();
+const runTool = jest.fn<Promise<ToolOutcome>, [ModelToolCall]>();
 const tools = { run: runTool } as unknown as ChatTools;
+
+const BOOKING_CALL: ModelToolCall = {
+  name: CREATE_BOOKING_TOOL,
+  arguments: { checkIn: '2026-11-03', checkOut: '2026-11-05' },
+};
 
 function text(content: string): ModelReply {
   return { content, toolCalls: [] };
@@ -75,7 +82,10 @@ function sentSystemPrompt(): string {
 
 beforeEach(() => {
   modelReply.mockResolvedValue(text('Yes, Nov 3 is open.'));
-  runTool.mockResolvedValue(TOOL_RESULT);
+  runTool.mockResolvedValue({
+    content: TOOL_RESULT,
+    availabilityChanged: false,
+  });
 });
 
 afterEach(() => {
@@ -181,7 +191,10 @@ describe('ChatService', () => {
 
         await service.reply(QUESTION);
 
-        expect(runTool).toHaveBeenCalledWith(AVAILABILITY_CALL);
+        expect(runTool).toHaveBeenCalledWith(
+          AVAILABILITY_CALL,
+          'Is Nov 3 open?',
+        );
       });
 
       it('sends the tool call and its result back to the model', async () => {
@@ -227,7 +240,28 @@ describe('ChatService', () => {
         await service.reply(QUESTION);
 
         expect(runTool).toHaveBeenCalledTimes(2);
-        expect(runTool).toHaveBeenLastCalledWith(secondCall);
+        expect(runTool).toHaveBeenLastCalledWith(secondCall, 'Is Nov 3 open?');
+      });
+
+      it("gives tools only the guest's own messages as what they typed", async () => {
+        const messages: ChatMessage[] = [
+          { role: 'user', content: 'Book Nov 3 to Nov 5' },
+          {
+            role: 'assistant',
+            content: 'Sure, Guest Name, guest@example.com?',
+          },
+          { role: 'user', content: 'Ana Lopez, ana@example.com, 5550100123' },
+        ];
+        modelReply
+          .mockResolvedValueOnce(toolCall(BOOKING_CALL))
+          .mockResolvedValueOnce(text('You are booked.'));
+
+        await service.reply(messages);
+
+        expect(runTool).toHaveBeenCalledWith(
+          BOOKING_CALL,
+          'Book Nov 3 to Nov 5\nAna Lopez, ana@example.com, 5550100123',
+        );
       });
 
       it(`asks for a final answer without tools after ${MAX_TOOL_ROUNDS} rounds`, async () => {
@@ -242,6 +276,76 @@ describe('ChatService', () => {
         });
         expect(runTool).toHaveBeenCalledTimes(MAX_TOOL_ROUNDS);
         expect(sentTools(MAX_TOOL_ROUNDS)).toEqual([]);
+      });
+
+      it("replies with a tool's final reply without asking the model again", async () => {
+        runTool.mockResolvedValueOnce({
+          content: TOOL_RESULT,
+          availabilityChanged: false,
+          finalReply: 'The night of Friday, November 6, 2026 is available.',
+        });
+        modelReply.mockResolvedValueOnce(toolCall(AVAILABILITY_CALL));
+
+        await expect(service.reply(QUESTION)).resolves.toEqual({
+          reply: 'The night of Friday, November 6, 2026 is available.',
+          availabilityChanged: false,
+        });
+        expect(modelReply).toHaveBeenCalledTimes(1);
+      });
+
+      it('joins the final replies of every tool in the round', async () => {
+        runTool
+          .mockResolvedValueOnce({
+            content: TOOL_RESULT,
+            availabilityChanged: false,
+            finalReply: 'The night of Friday, November 6, 2026 is available.',
+          })
+          .mockResolvedValueOnce({
+            content: TOOL_RESULT,
+            availabilityChanged: false,
+            finalReply:
+              'The night of Friday, November 20, 2026 is already booked.',
+          });
+        modelReply.mockResolvedValueOnce({
+          content: '',
+          toolCalls: [AVAILABILITY_CALL, AVAILABILITY_CALL],
+        });
+
+        const response = await service.reply(QUESTION);
+
+        expect(response.reply).toBe(
+          'The night of Friday, November 6, 2026 is available. The night of Friday, November 20, 2026 is already booked.',
+        );
+      });
+
+      it('says availability changed when a tool booked a stay', async () => {
+        runTool.mockResolvedValueOnce({
+          content: '{"bookingNumber":"K7Q2MX"}',
+          availabilityChanged: true,
+        });
+        modelReply
+          .mockResolvedValueOnce(toolCall(BOOKING_CALL))
+          .mockResolvedValueOnce(text('You are booked.'));
+
+        await expect(service.reply(QUESTION)).resolves.toEqual({
+          reply: 'You are booked.',
+          availabilityChanged: true,
+        });
+      });
+
+      it('keeps availability changed after a later tool round that changes nothing', async () => {
+        runTool.mockResolvedValueOnce({
+          content: '{"bookingNumber":"K7Q2MX"}',
+          availabilityChanged: true,
+        });
+        modelReply
+          .mockResolvedValueOnce(toolCall(BOOKING_CALL))
+          .mockResolvedValueOnce(toolCall(AVAILABILITY_CALL))
+          .mockResolvedValueOnce(text('You are booked.'));
+
+        const response = await service.reply(QUESTION);
+
+        expect(response.availabilityChanged).toBe(true);
       });
     });
 

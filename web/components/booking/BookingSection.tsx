@@ -6,6 +6,7 @@ import LoadError from '@/components/shared/LoadError';
 import SectionHeading from '@/components/shared/SectionHeading';
 import { useAvailability } from '@/hooks/useAvailability';
 import { useCreateBooking } from '@/hooks/useCreateBooking';
+import { useOnAvailabilityChanged } from '@/hooks/useOnAvailabilityChanged';
 import { EMPTY_SELECTION, selectDate, type StaySelection } from '@/lib/dates';
 import type { ApiError } from '@/lib/api';
 import type { BookingConfirmation, GuestDetails } from '@/lib/types';
@@ -30,6 +31,7 @@ function toBookingResult(
 export default function BookingSection() {
   const availability = useAvailability();
   const booking = useCreateBooking();
+  useOnAvailabilityChanged(availability.refetch);
   const [selection, setSelection] = useState<StaySelection>(EMPTY_SELECTION);
   const [formKey, setFormKey] = useState<number>(0);
 

@@ -1,15 +1,32 @@
 import { Injectable } from '@nestjs/common';
+import { plainToInstance } from 'class-transformer';
+import { validate } from 'class-validator';
 import { BookingsService } from '../bookings/bookings.service';
 import type { AvailabilityResponse } from '../bookings/bookings.types';
+import { CreateBookingDto } from '../bookings/dto/create-booking.dto';
 import { addDays, formatLongDate, isCalendarDate } from '../common/dates';
+import { PHONE_DIGITS, toPhoneDigits } from '../common/phone';
+import { joinWithAnd } from '../common/text';
+import { validationMessages } from '../common/validation-errors';
 import {
+  CREATE_BOOKING_TOOL,
   GET_AVAILABILITY_TOOL,
   TOOL_DATES_INVALID,
+  TOOL_PHONE_INVALID,
   UNKNOWN_TOOL,
+  bookingConfirmed,
+  guestDetailsNotGiven,
 } from './chat.constants';
-import type { ModelTool, ModelToolCall, StayCheck } from './chat.types';
+import { guestDetailsNotTyped } from './guest-details';
+import type {
+  ModelTool,
+  ModelToolCall,
+  StayCheck,
+  ToolOutcome,
+} from './chat.types';
 import { checkStay } from './stay-check';
 import { staySummary } from './stay-summary';
+import { exceptionMessages, isBookingRuleError } from './tool-errors';
 
 export const AVAILABILITY_TOOL: ModelTool = {
   name: GET_AVAILABILITY_TOOL,
@@ -33,7 +50,33 @@ export const AVAILABILITY_TOOL: ModelTool = {
   },
 };
 
-export const CHAT_TOOLS: ModelTool[] = [AVAILABILITY_TOOL];
+export const CREATE_BOOKING_TOOL_DEFINITION: ModelTool = {
+  name: CREATE_BOOKING_TOOL,
+  description:
+    'Book the room. Only call this after the guest has given all five details and said yes to booking them. Never make up any detail.',
+  parameters: {
+    type: 'object',
+    properties: {
+      checkIn: { type: 'string', description: 'Check-in date as YYYY-MM-DD.' },
+      checkOut: {
+        type: 'string',
+        description: 'Check-out date as YYYY-MM-DD, after checkIn.',
+      },
+      guestName: { type: 'string', description: "The guest's full name." },
+      guestEmail: { type: 'string', description: "The guest's email address." },
+      guestPhone: {
+        type: 'string',
+        description: `The guest's ${PHONE_DIGITS}-digit phone number.`,
+      },
+    },
+    required: ['checkIn', 'checkOut', 'guestName', 'guestEmail', 'guestPhone'],
+  },
+};
+
+export const CHAT_TOOLS: ModelTool[] = [
+  AVAILABILITY_TOOL,
+  CREATE_BOOKING_TOOL_DEFINITION,
+];
 
 type StayResult = StayCheck & {
   summary: string;
@@ -46,15 +89,29 @@ type AvailabilityResult =
   | (AvailabilityResponse & { stay: StayResult })
   | { error: string };
 
+function unchanged(result: object): ToolOutcome {
+  return { content: JSON.stringify(result), availabilityChanged: false };
+}
+
+function failed(messages: string[]): ToolOutcome {
+  return unchanged({ error: messages.join(' ') });
+}
+
 @Injectable()
 export class ChatTools {
   constructor(private readonly bookingsService: BookingsService) {}
 
-  async run(call: ModelToolCall): Promise<string> {
+  async run(call: ModelToolCall, guestTyped: string): Promise<ToolOutcome> {
     if (call.name === GET_AVAILABILITY_TOOL) {
-      return JSON.stringify(await this.availability(call.arguments));
+      const result = await this.availability(call.arguments);
+      return 'stay' in result
+        ? { ...unchanged(result), finalReply: result.stay.summary }
+        : unchanged(result);
     }
-    return JSON.stringify({ error: UNKNOWN_TOOL });
+    if (call.name === CREATE_BOOKING_TOOL) {
+      return this.createBooking(call.arguments, guestTyped);
+    }
+    return failed([UNKNOWN_TOOL]);
   }
 
   private async availability(
@@ -87,5 +144,51 @@ export class ChatTools {
         ...check,
       },
     };
+  }
+
+  private async createBooking(
+    args: Record<string, unknown>,
+    guestTyped: string,
+  ): Promise<ToolOutcome> {
+    const booking = plainToInstance(CreateBookingDto, {
+      checkIn: args.checkIn,
+      checkOut: args.checkOut,
+      guestName: args.guestName,
+      guestEmail: args.guestEmail,
+      guestPhone:
+        typeof args.guestPhone === 'string'
+          ? toPhoneDigits(args.guestPhone)
+          : args.guestPhone,
+    });
+    const errors = await validate(booking, { stopAtFirstError: true });
+    if (errors.length > 0) {
+      return failed(validationMessages(errors));
+    }
+    if (booking.guestPhone.length !== PHONE_DIGITS) {
+      return failed([TOOL_PHONE_INVALID]);
+    }
+    const notTyped = guestDetailsNotTyped(booking, guestTyped);
+    if (notTyped.length > 0) {
+      return failed([guestDetailsNotGiven(joinWithAnd(notTyped))]);
+    }
+    try {
+      const confirmation = await this.bookingsService.create(booking);
+      return {
+        content: JSON.stringify({
+          ...confirmation,
+          summary: bookingConfirmed(
+            formatLongDate(confirmation.checkIn),
+            formatLongDate(confirmation.checkOut),
+            confirmation.bookingNumber,
+          ),
+        }),
+        availabilityChanged: true,
+      };
+    } catch (error) {
+      if (isBookingRuleError(error)) {
+        return failed(exceptionMessages(error));
+      }
+      throw error;
+    }
   }
 }

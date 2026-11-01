@@ -58,6 +58,7 @@ describe('Button', () => {
     'icon',
     'round',
     'round-small',
+    'chip',
   ] as const)('works as a %s button', async (variant) => {
     const onClick = jest.fn();
     render(
