@@ -48,6 +48,8 @@ describe('ChatTools', () => {
       expect(result).toEqual({
         ...availability,
         stay: {
+          summary:
+            'Monday, November 2, 2026 to Thursday, November 5, 2026 is available.',
           checkIn: 'Monday, November 2, 2026',
           checkOut: 'Thursday, November 5, 2026',
           available: true,
@@ -66,6 +68,8 @@ describe('ChatTools', () => {
       expect(result).toEqual({
         ...availability,
         stay: {
+          summary:
+            'Wednesday, November 4, 2026 to Saturday, November 7, 2026 is not available because the nights of Thursday, November 5, 2026 and Friday, November 6, 2026 are already booked.',
           checkIn: 'Wednesday, November 4, 2026',
           checkOut: 'Saturday, November 7, 2026',
           available: false,
@@ -92,6 +96,7 @@ describe('ChatTools', () => {
       expect(result).toEqual({
         ...availability,
         stay: {
+          summary: 'The night of Wednesday, November 4, 2026 is available.',
           checkIn: 'Wednesday, November 4, 2026',
           checkOut: 'Thursday, November 5, 2026',
           available: true,
@@ -107,6 +112,7 @@ describe('ChatTools', () => {
       expect(result).toEqual({
         ...availability,
         stay: {
+          summary: 'The night of Thursday, November 5, 2026 is already booked.',
           checkIn: 'Thursday, November 5, 2026',
           checkOut: 'Friday, November 6, 2026',
           available: false,

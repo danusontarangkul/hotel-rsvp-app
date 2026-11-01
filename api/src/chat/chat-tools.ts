@@ -9,6 +9,7 @@ import {
 } from './chat.constants';
 import type { ModelTool, ModelToolCall, StayCheck } from './chat.types';
 import { checkStay } from './stay-check';
+import { staySummary } from './stay-summary';
 
 export const AVAILABILITY_TOOL: ModelTool = {
   name: GET_AVAILABILITY_TOOL,
@@ -35,6 +36,7 @@ export const AVAILABILITY_TOOL: ModelTool = {
 export const CHAT_TOOLS: ModelTool[] = [AVAILABILITY_TOOL];
 
 type StayResult = StayCheck & {
+  summary: string;
   checkIn: string;
   checkOut: string;
 };
@@ -71,12 +73,18 @@ export class ChatTools {
       return { error: TOOL_DATES_INVALID };
     }
     const availability = await this.bookingsService.getAvailability();
+    const check = checkStay(availability, checkIn, stayCheckOut);
     return {
       ...availability,
       stay: {
+        summary: staySummary(check, {
+          checkIn,
+          checkOut: stayCheckOut,
+          firstBookableDate: availability.firstBookableDate,
+        }),
         checkIn: formatLongDate(checkIn),
         checkOut: formatLongDate(stayCheckOut),
-        ...checkStay(availability, checkIn, stayCheckOut),
+        ...check,
       },
     };
   }

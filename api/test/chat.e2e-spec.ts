@@ -124,6 +124,8 @@ describe('POST /api/chat', () => {
       firstBookableDate: '2026-11-02',
       bookedNights: ['2026-11-05', '2026-11-06'],
       stay: {
+        summary:
+          'Wednesday, November 4, 2026 to Friday, November 6, 2026 is not available because the night of Thursday, November 5, 2026 is already booked.',
         checkIn: 'Wednesday, November 4, 2026',
         checkOut: 'Friday, November 6, 2026',
         available: false,
@@ -142,6 +144,8 @@ describe('POST /api/chat', () => {
       firstBookableDate: '2026-11-02',
       bookedNights: ['2026-11-05', '2026-11-06'],
       stay: {
+        summary:
+          'Tuesday, November 3, 2026 to Thursday, November 5, 2026 is available.',
         checkIn: 'Tuesday, November 3, 2026',
         checkOut: 'Thursday, November 5, 2026',
         available: true,
@@ -158,6 +162,7 @@ describe('POST /api/chat', () => {
       firstBookableDate: '2026-11-02',
       bookedNights: ['2026-11-05', '2026-11-06'],
       stay: {
+        summary: 'The night of Thursday, November 5, 2026 is already booked.',
         checkIn: 'Thursday, November 5, 2026',
         checkOut: 'Friday, November 6, 2026',
         available: false,

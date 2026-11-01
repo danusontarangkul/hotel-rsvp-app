@@ -16,6 +16,21 @@ export const TOOL_DATES_INVALID =
 export const STAY_NIGHTS_BOOKED =
   'Some nights in this stay are already booked.';
 
+export const oneNight = (night: string): string => `The night of ${night}`;
+export const nightsFromTo = (checkIn: string, checkOut: string): string =>
+  `${checkIn} to ${checkOut}`;
+export const stayAvailable = (stay: string): string => `${stay} is available.`;
+export const stayTooEarly = (stay: string, earliest: string): string =>
+  `${stay} can't be booked. The earliest check-in is ${earliest}.`;
+export const STAY_CHECK_OUT_NOT_AFTER_CHECK_IN =
+  'Check-out has to be after check-in, so that stay needs a later check-out date.';
+export const oneNightBooked = (night: string): string =>
+  `${oneNight(night)} is already booked.`;
+export const stayOneNightBooked = (stay: string, night: string): string =>
+  `${stay} is not available because the night of ${night} is already booked.`;
+export const stayNightsBooked = (stay: string, nights: string): string =>
+  `${stay} is not available because the nights of ${nights} are already booked.`;
+
 export const NO_PERMISSION = 'You do not have permission.';
 export const CANNOT_HELP = 'Unfortunately, I cannot help with that.';
 export const CHAT_UNAVAILABLE = 'Chat is unavailable.';
