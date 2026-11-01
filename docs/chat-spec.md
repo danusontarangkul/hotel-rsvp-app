@@ -1,6 +1,6 @@
 # Hotel Booking App: Chat Assistant Spec
 
-A proof of concept chat on `/` for User Stories 7 to 11. Runs locally only, with Ollama and `qwen3:8b`.
+A proof of concept chat on `/` for User Stories 7 to 10. Runs locally only, with Ollama and `qwen3:8b`.
 
 ## Flow
 
@@ -31,7 +31,7 @@ Every request is built from scratch. The model remembers nothing between request
 | Today's date | From `CLOCK`, in the hotel time zone, after `TODAY_PROMPT_PREFIX`, e.g. `Today is 2026-10-31.` |
 | FAQ | `CHAT_FAQ` in `api/src/chat/chat-faq.ts`, sent every time |
 | Messages | The last `MAX_CHAT_MESSAGES` (10) messages from the browser |
-| Tools | Guest: `get_availability`, `create_booking`. Staff: those plus `cancel_booking`, `get_bookings`. `get_availability` and `create_booking` are connected so far (`api/src/chat/chat-tools.ts`) |
+| Tools | Guest: `get_availability`, `create_booking`. Staff: those plus `cancel_booking`. `get_availability` and `create_booking` are connected so far (`api/src/chat/chat-tools.ts`) |
 
 ## Limits
 
@@ -47,7 +47,7 @@ All chat text lives in `api/src/chat/chat.constants.ts`, the source of truth for
 
 | Constant | When |
 |---|---|
-| `NO_PERMISSION` | A guest asks for a staff-only action (cancel, booking lookup) |
+| `NO_PERMISSION` | A guest asks for a staff-only action (cancel) |
 | `CANNOT_HELP` | The question isn't covered by the FAQ or the tools, or the contact details guardrail blocks the reply |
 | `CHAT_UNAVAILABLE` | Ollama is not running (`503`) |
 

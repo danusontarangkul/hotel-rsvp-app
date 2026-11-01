@@ -15,7 +15,7 @@ NestJS REST API. All paths start with `/api` (the Next.js rewrite forwards them 
 | GET | `/api/bookings` | Staff | User Story 5: View bookings |
 | GET | `/api/bookings/by-number/:bookingNumber` | Staff | User Story 10: Chat cancel (look up the booking) |
 | POST | `/api/bookings/:id/cancel` | Staff | User Story 6: Cancel |
-| POST | `/api/chat` | Optional | User Stories 7 to 11: Chat |
+| POST | `/api/chat` | Optional | User Stories 7 to 10: Chat |
 
 "Staff" means a valid login cookie is required. A missing, empty, tampered or expired `token` cookie returns `401` with `message` `Unauthorized`, before the endpoint does anything.
 
@@ -220,7 +220,7 @@ The "are you sure?" confirmation is front end only.
 
 ## POST /api/chat
 
-User Stories 7 to 11. Sends the conversation and returns the chat's next reply. Nothing is saved; the web app keeps the history and sends all of it each time.
+User Stories 7 to 10. Sends the conversation and returns the chat's next reply. Nothing is saved; the web app keeps the history and sends all of it each time.
 
 **Request**
 ```json
@@ -269,7 +269,6 @@ The model answers by calling these tools. The server decides which tools it gets
 | `get_availability` | Everyone | Connected | Same as GET `/api/availability`. With an optional `checkIn` (and optional `checkOut`) it also returns `stay`, using the booking rules (see below) |
 | `create_booking` | Everyone | Connected | Same as POST `/api/bookings`, with the same rules and errors (see below) |
 | `cancel_booking` | Staff | Not yet | Cancels by booking number, same rules and errors as POST `/api/bookings/:id/cancel` |
-| `get_bookings` | Staff | Not yet | Same as GET `/api/bookings` |
 
 - `get_availability` with `checkIn` returns `{ firstBookableDate, bookedNights, stay }`. Without `checkOut` it checks one night (`checkOut` is the next day).
 - `stay` always has a `summary`, one finished sentence like `The night of Friday, November 20, 2026 is already booked.` The sentence templates are in `chat.constants.ts`.

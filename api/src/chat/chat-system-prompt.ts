@@ -34,7 +34,7 @@ ${CHAT_FAQ}
 
 export const AUDIENCE_PROMPTS: Record<ChatAudience, string> = {
   guest: `The user is a guest. Guests can ask questions, check which nights are free and book. Guests can't cancel bookings or see other guests' bookings or details. If a guest asks to cancel a booking or to see bookings, reply exactly: "${NO_PERMISSION}"`,
-  staff: `The user is logged-in hotel staff. Staff can do everything a guest can, and can also cancel a booking by its booking number and look up bookings and guest details.`,
+  staff: `The user is logged-in hotel staff. Staff can do everything a guest can. To cancel a booking, staff click the Cancel button in this chat; you can't cancel or look up bookings yourself. If staff ask you to cancel or look up a booking, tell them to use the Cancel button or the bookings page.`,
 };
 
 export const TODAY_PROMPT_PREFIX = 'Today is';
