@@ -8,6 +8,7 @@ import {
   getCurrentStaff,
   login,
   logout,
+  sendChat,
   signup,
   toApiError,
 } from './api';
@@ -175,6 +176,54 @@ describe('createBooking', () => {
 
     await expect(createBooking(booking)).rejects.toEqual(
       new ApiError(409, ['Those dates are no longer available']),
+    );
+  });
+});
+
+describe('sendChat', () => {
+  const chat = {
+    messages: [{ role: 'user' as const, content: 'Is Nov 3 open?' }],
+  };
+
+  it('posts the conversation and returns the reply', async () => {
+    const reply = {
+      reply: 'Unfortunately, I cannot help with that.',
+      availabilityChanged: false,
+    };
+    mockFetch(200, reply);
+
+    await expect(sendChat(chat)).resolves.toEqual(reply);
+    expect(global.fetch).toHaveBeenCalledWith('/api/chat', {
+      method: 'POST',
+      body: JSON.stringify(chat),
+      headers: { 'Content-Type': 'application/json' },
+    });
+  });
+
+  it('throws an ApiError with the messages on a 400', async () => {
+    mockFetch(400, {
+      statusCode: 400,
+      message: ['Message content is required.'],
+    });
+
+    await expect(sendChat(chat)).rejects.toEqual(
+      new ApiError(400, ['Message content is required.']),
+    );
+  });
+
+  it('throws an ApiError with the message on a 503', async () => {
+    mockFetch(503, { statusCode: 503, message: 'Chat is unavailable.' });
+
+    await expect(sendChat(chat)).rejects.toEqual(
+      new ApiError(503, ['Chat is unavailable.']),
+    );
+  });
+
+  it('hides the message of other errors', async () => {
+    mockFetch(500, { statusCode: 500, message: 'Internal server error' });
+
+    await expect(sendChat(chat)).rejects.toEqual(
+      new ApiError(500, [GENERIC_ERROR_MESSAGE]),
     );
   });
 });

@@ -3,6 +3,8 @@ import type {
   Availability,
   Booking,
   BookingConfirmation,
+  ChatInput,
+  ChatReply,
   CreateBookingInput,
   LoginInput,
   SignupInput,
@@ -16,6 +18,7 @@ const LOGIN_ERROR_STATUSES = [400, 401] as const;
 const CREATE_BOOKING_ERROR_STATUSES = [400, 409] as const;
 const CANCEL_BOOKING_ERROR_STATUSES = [409] as const;
 const CURRENT_STAFF_ERROR_STATUSES = [401] as const;
+const CHAT_ERROR_STATUSES = [400, 503] as const;
 
 export class ApiError extends Error {
   readonly status: number;
@@ -140,6 +143,14 @@ export async function logout(): Promise<void> {
 
 export function getBookings(): Promise<Booking[]> {
   return request<Booking[]>('/api/bookings', { method: 'GET' });
+}
+
+export function sendChat(input: ChatInput): Promise<ChatReply> {
+  return request<ChatReply>(
+    '/api/chat',
+    { method: 'POST', body: JSON.stringify(input) },
+    CHAT_ERROR_STATUSES,
+  );
 }
 
 export function cancelBooking(id: string): Promise<Booking> {

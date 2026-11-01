@@ -3,6 +3,8 @@
 import { useState } from 'react';
 import Button from '@/components/shared/Button';
 import { ChatIcon } from '@/components/shared/icons';
+import { useChat } from '@/hooks/useChat';
+import { toFormErrors } from '@/lib/form-errors';
 import type { ChatTurn } from '@/lib/types';
 import ChatPanel from './ChatPanel';
 import { CHAT_GREETING, OPEN_CHAT_LABEL } from './chatCopy';
@@ -12,9 +14,18 @@ const GREETING: ChatTurn = { role: 'assistant', content: CHAT_GREETING };
 export default function ChatWidget() {
   const [isOpen, setIsOpen] = useState<boolean>(false);
   const [messages, setMessages] = useState<ChatTurn[]>([GREETING]);
+  const { run, loading, error } = useChat();
 
-  function handleSend(content: string) {
-    setMessages((current) => [...current, { role: 'user', content }]);
+  async function handleSend(content: string) {
+    const conversation: ChatTurn[] = [...messages, { role: 'user', content }];
+    setMessages(conversation);
+    const response = await run({ messages: conversation });
+    if (response) {
+      setMessages([
+        ...conversation,
+        { role: 'assistant', content: response.reply },
+      ]);
+    }
   }
 
   return (
@@ -25,6 +36,8 @@ export default function ChatWidget() {
             messages={messages}
             onSend={handleSend}
             onMinimize={() => setIsOpen(false)}
+            sending={loading}
+            errors={toFormErrors(error, []).form}
           />
         </div>
       ) : (

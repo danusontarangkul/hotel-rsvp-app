@@ -15,9 +15,15 @@ import { MAX_MESSAGE_LENGTH } from './chatLimits';
 
 type ChatComposerProps = {
   onSend: (content: string) => void;
+  sending?: boolean;
+  errors?: string[];
 };
 
-export default function ChatComposer({ onSend }: ChatComposerProps) {
+export default function ChatComposer({
+  onSend,
+  sending = false,
+  errors = [],
+}: ChatComposerProps) {
   const [draft, setDraft] = useState<string>('');
 
   function handleChange(event: ChangeEvent<HTMLInputElement>) {
@@ -26,7 +32,7 @@ export default function ChatComposer({ onSend }: ChatComposerProps) {
 
   function handleSubmit(event: SubmitEvent<HTMLFormElement>) {
     event.preventDefault();
-    if (!isFilled(draft)) {
+    if (sending || !isFilled(draft)) {
       return;
     }
     onSend(draft);
@@ -34,7 +40,7 @@ export default function ChatComposer({ onSend }: ChatComposerProps) {
   }
 
   return (
-    <Form onSubmit={handleSubmit} actions={null}>
+    <Form onSubmit={handleSubmit} actions={null} errors={errors}>
       <TextInput
         label={MESSAGE_INPUT_LABEL}
         placeholder={MESSAGE_PLACEHOLDER}
@@ -47,6 +53,7 @@ export default function ChatComposer({ onSend }: ChatComposerProps) {
             type="submit"
             variant="round-small"
             aria-label={SEND_LABEL}
+            loading={sending}
             disabled={!isFilled(draft)}
           >
             <SendIcon />

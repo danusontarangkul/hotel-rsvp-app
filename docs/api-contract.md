@@ -219,7 +219,7 @@ User Stories 7 to 11. Sends the conversation and returns the chat's next reply. 
 
 - `messages`: required, at least 1 message.
 - `role`: `user` or `assistant`.
-- `content`: not blank, at most 200 characters.
+- `content`: not blank. A `user` message is at most 200 characters; `assistant` replies sent back in the history can be longer.
 - The last message must be from `user`.
 - Only the last 10 messages are sent to the model; older ones are dropped.
 
@@ -232,14 +232,15 @@ User Stories 7 to 11. Sends the conversation and returns the chat's next reply. 
 ```
 
 - `availabilityChanged` is `true` when this reply booked or cancelled a stay, so the web app reloads the calendar.
+- Until the model is connected, `reply` is always `Unfortunately, I cannot help with that.` and `availabilityChanged` is `false`.
 
 **Errors**
 | Status | When |
 |---|---|
-| 400 | `messages` missing or empty, a bad `role`, a blank `content`, or the last message isn't from `user`. Unknown fields also return `400`. |
-| 503 | Ollama is not running or doesn't respond. `message` is exactly `Chat is unavailable.` |
+| 400 | `messages` missing or empty, a bad `role`, a blank `content`, a `user` message over 200 characters, or the last message isn't from `user`. Unknown fields also return `400`. |
+| 503 | Ollama is not running or doesn't respond. `message` is exactly `Chat is unavailable.` (Not returned until the model is connected.) |
 
-- `400` messages, one per problem: `Messages are required.`, `Role must be user or assistant.`, `Message content is required.`, `The last message must be from the user.`
+- `400` messages, one per problem (a problem in several messages is listed once): `Messages are required.`, `Role must be user or assistant.`, `Message content is required.`, `Message content must be at most 200 characters.`, `The last message must be from the user.`
 
 **Tools**
 

@@ -53,6 +53,31 @@ describe('ChatComposer', () => {
     );
   });
 
+  it('marks Send busy while sending', () => {
+    render(<ChatComposer onSend={jest.fn()} sending />);
+
+    const send = screen.getByRole('button', { name: 'Send' });
+    expect(send).toHaveAttribute('aria-busy', 'true');
+    expect(send).toBeDisabled();
+  });
+
+  it('does not send another message while sending', async () => {
+    const onSend = jest.fn();
+    render(<ChatComposer onSend={onSend} sending />);
+
+    await userEvent.type(screen.getByLabelText('Message'), 'Hello{Enter}');
+
+    expect(onSend).not.toHaveBeenCalled();
+  });
+
+  it('shows the errors it is given', () => {
+    render(
+      <ChatComposer onSend={jest.fn()} errors={['Chat is unavailable.']} />,
+    );
+
+    expect(screen.getByText('Chat is unavailable.')).toBeVisible();
+  });
+
   it('disables Send until a message is typed', () => {
     render(<ChatComposer onSend={jest.fn()} />);
 

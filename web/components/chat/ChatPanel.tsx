@@ -12,12 +12,16 @@ type ChatPanelProps = {
   messages: ChatTurn[];
   onSend: (content: string) => void;
   onMinimize: () => void;
+  sending?: boolean;
+  errors?: string[];
 };
 
 export default function ChatPanel({
   messages,
   onSend,
   onMinimize,
+  sending = false,
+  errors = [],
 }: ChatPanelProps) {
   const listRef = useScrollToBottom<HTMLOListElement>(messages);
 
@@ -51,7 +55,7 @@ export default function ChatPanel({
         ))}
       </ol>
       <div className="border-t border-border px-4 pt-3">
-        <ChatComposer onSend={onSend} />
+        <ChatComposer onSend={onSend} sending={sending} errors={errors} />
       </div>
     </section>
   );

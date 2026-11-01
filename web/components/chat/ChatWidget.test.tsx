@@ -1,6 +1,29 @@
 import { render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
+import { ApiError, sendChat } from '@/lib/api';
 import ChatWidget from './ChatWidget';
+
+jest.mock('@/lib/api', () => ({
+  ...jest.requireActual('@/lib/api'),
+  sendChat: jest.fn(),
+}));
+
+const mockSendChat = jest.mocked(sendChat);
+
+const REPLY = 'Unfortunately, I cannot help with that.';
+
+beforeEach(() => {
+  mockSendChat.mockResolvedValue({ reply: REPLY, availabilityChanged: false });
+});
+
+afterEach(() => {
+  jest.resetAllMocks();
+});
+
+async function openChat() {
+  render(<ChatWidget />);
+  await userEvent.click(screen.getByRole('button', { name: 'Open chat' }));
+}
 
 describe('ChatWidget', () => {
   it('starts minimized', () => {
@@ -13,9 +36,7 @@ describe('ChatWidget', () => {
   });
 
   it('opens the chat with the greeting', async () => {
-    render(<ChatWidget />);
-
-    await userEvent.click(screen.getByRole('button', { name: 'Open chat' }));
+    await openChat();
 
     expect(screen.getByRole('region', { name: 'Chat' })).toBeVisible();
     expect(screen.getByRole('listitem')).toHaveTextContent(
@@ -24,23 +45,74 @@ describe('ChatWidget', () => {
   });
 
   it('adds a sent message to the chat', async () => {
-    render(<ChatWidget />);
+    await openChat();
 
-    await userEvent.click(screen.getByRole('button', { name: 'Open chat' }));
     await userEvent.type(
       screen.getByLabelText('Message'),
       'Is Nov 3 open?{Enter}',
     );
 
+    expect(screen.getAllByRole('listitem')[1]).toHaveTextContent(
+      'Is Nov 3 open?',
+    );
+  });
+
+  it('sends the whole conversation to the API', async () => {
+    await openChat();
+
+    await userEvent.type(
+      screen.getByLabelText('Message'),
+      'Is Nov 3 open?{Enter}',
+    );
+
+    expect(mockSendChat).toHaveBeenCalledWith({
+      messages: [
+        { role: 'assistant', content: 'How can I help you today?' },
+        { role: 'user', content: 'Is Nov 3 open?' },
+      ],
+    });
+  });
+
+  it('shows the reply after the sent message', async () => {
+    await openChat();
+
+    await userEvent.type(
+      screen.getByLabelText('Message'),
+      'Is Nov 3 open?{Enter}',
+    );
+
+    const items = await screen.findAllByRole('listitem');
+    expect(items).toHaveLength(3);
+    expect(items[2]).toHaveTextContent(`Assistant: ${REPLY}`);
+  });
+
+  it('marks Send busy while waiting for the reply', async () => {
+    mockSendChat.mockReturnValue(new Promise(() => {}));
+    await openChat();
+
+    await userEvent.type(screen.getByLabelText('Message'), 'Hello{Enter}');
+
+    expect(screen.getByRole('button', { name: 'Send' })).toHaveAttribute(
+      'aria-busy',
+      'true',
+    );
+  });
+
+  it('shows the API message and keeps the sent message when sending fails', async () => {
+    mockSendChat.mockRejectedValue(new ApiError(503, ['Chat is unavailable.']));
+    await openChat();
+
+    await userEvent.type(screen.getByLabelText('Message'), 'Hello{Enter}');
+
+    expect(await screen.findByText('Chat is unavailable.')).toBeVisible();
     const items = screen.getAllByRole('listitem');
     expect(items).toHaveLength(2);
-    expect(items[1]).toHaveTextContent('Is Nov 3 open?');
+    expect(items[1]).toHaveTextContent('Hello');
   });
 
   it('minimizes the chat', async () => {
-    render(<ChatWidget />);
+    await openChat();
 
-    await userEvent.click(screen.getByRole('button', { name: 'Open chat' }));
     await userEvent.click(
       screen.getByRole('button', { name: 'Minimize chat' }),
     );
@@ -52,10 +124,10 @@ describe('ChatWidget', () => {
   });
 
   it('keeps the messages after minimizing and opening again', async () => {
-    render(<ChatWidget />);
-
-    await userEvent.click(screen.getByRole('button', { name: 'Open chat' }));
+    await openChat();
     await userEvent.type(screen.getByLabelText('Message'), 'Hello{Enter}');
+    await screen.findByText(REPLY, { exact: false });
+
     await userEvent.click(
       screen.getByRole('button', { name: 'Minimize chat' }),
     );

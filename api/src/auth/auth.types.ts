@@ -10,6 +10,10 @@ export type AuthenticatedRequest = Request & {
   staffId: string;
 };
 
+export type OptionallyAuthenticatedRequest = Request & {
+  staffId?: string;
+};
+
 export type JwtPayload = {
   sub: string;
 };
