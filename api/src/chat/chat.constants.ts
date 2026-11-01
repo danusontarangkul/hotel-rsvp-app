@@ -9,6 +9,13 @@ export const MAX_TOOL_ROUNDS = 3;
 export const CHAT_CONTEXT_TOKENS = 8192;
 export const CHAT_REPLY_TOKENS = 512;
 
+export const GET_AVAILABILITY_TOOL = 'get_availability';
+export const UNKNOWN_TOOL = 'Unknown tool.';
+export const TOOL_DATES_INVALID =
+  'Dates must be real dates in YYYY-MM-DD form. Work out the date from what the user wrote and call again. Do not ask the user for a date format.';
+export const STAY_NIGHTS_BOOKED =
+  'Some nights in this stay are already booked.';
+
 export const NO_PERMISSION = 'You do not have permission.';
 export const CANNOT_HELP = 'Unfortunately, I cannot help with that.';
 export const CHAT_UNAVAILABLE = 'Chat is unavailable.';

@@ -9,14 +9,49 @@ export type ChatMessage = {
   content: string;
 };
 
+export type ModelToolCall = {
+  name: string;
+  arguments: Record<string, unknown>;
+};
+
 export type ModelMessage = {
-  role: 'system' | ChatRole;
+  role: 'system' | 'tool' | ChatRole;
   content: string;
+  toolCalls?: ModelToolCall[];
+  toolName?: string;
+};
+
+export type ModelToolParameter = {
+  type: 'string';
+  description: string;
+};
+
+export type ModelTool = {
+  name: string;
+  description: string;
+  parameters: {
+    type: 'object';
+    properties: Record<string, ModelToolParameter>;
+    required: string[];
+  };
+};
+
+export type ModelReply = {
+  content: string;
+  toolCalls: ModelToolCall[];
 };
 
 export type ChatModel = {
-  reply: (messages: ModelMessage[]) => Promise<string>;
+  reply: (messages: ModelMessage[], tools: ModelTool[]) => Promise<ModelReply>;
 };
+
+export type StayCheck =
+  | { available: true }
+  | {
+      available: false;
+      reason: string;
+      bookedNightsInStay?: string[];
+    };
 
 export type ChatResponse = {
   reply: string;

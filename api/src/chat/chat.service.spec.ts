@@ -4,16 +4,26 @@ import {
 } from '@nestjs/common';
 import type { Clock } from '../common/clock';
 import { AUDIENCE_PROMPTS } from './chat-system-prompt';
+import { CHAT_TOOLS, type ChatTools } from './chat-tools';
 import {
   CANNOT_HELP,
   CHAT_UNAVAILABLE,
   CONTENT_TOO_LONG,
+  GET_AVAILABILITY_TOOL,
   LAST_MESSAGE_NOT_FROM_USER,
   MAX_CHAT_MESSAGES,
   MAX_MESSAGE_LENGTH,
+  MAX_TOOL_ROUNDS,
 } from './chat.constants';
 import { ChatService } from './chat.service';
-import type { ChatMessage, ChatModel, ModelMessage } from './chat.types';
+import type {
+  ChatMessage,
+  ChatModel,
+  ModelMessage,
+  ModelReply,
+  ModelTool,
+  ModelToolCall,
+} from './chat.types';
 
 const NOON_IN_LOS_ANGELES_ON_NOVEMBER_1 = new Date('2026-11-01T19:00:00.000Z');
 const LATE_EVENING_IN_LOS_ANGELES_ON_NOVEMBER_1 = new Date(
@@ -22,16 +32,41 @@ const LATE_EVENING_IN_LOS_ANGELES_ON_NOVEMBER_1 = new Date(
 
 const QUESTION: ChatMessage[] = [{ role: 'user', content: 'Is Nov 3 open?' }];
 
-const modelReply = jest.fn<Promise<string>, [ModelMessage[]]>();
+const AVAILABILITY_CALL: ModelToolCall = {
+  name: GET_AVAILABILITY_TOOL,
+  arguments: { checkIn: '2026-11-03', checkOut: '2026-11-05' },
+};
+
+const TOOL_RESULT = '{"stay":{"available":true}}';
+
+const modelReply = jest.fn<
+  Promise<ModelReply>,
+  [ModelMessage[], ModelTool[]]
+>();
 const model: ChatModel = { reply: modelReply };
+
+const runTool = jest.fn<Promise<string>, [ModelToolCall]>();
+const tools = { run: runTool } as unknown as ChatTools;
+
+function text(content: string): ModelReply {
+  return { content, toolCalls: [] };
+}
+
+function toolCall(call: ModelToolCall): ModelReply {
+  return { content: '', toolCalls: [call] };
+}
 
 function serviceAt(now: Date): ChatService {
   const clock: Clock = { now: () => now };
-  return new ChatService(model, clock);
+  return new ChatService(model, clock, tools);
 }
 
-function sentMessages(): ModelMessage[] {
-  return modelReply.mock.calls[0][0];
+function sentMessages(call = 0): ModelMessage[] {
+  return modelReply.mock.calls[call][0];
+}
+
+function sentTools(call = 0): ModelTool[] {
+  return modelReply.mock.calls[call][1];
 }
 
 function sentSystemPrompt(): string {
@@ -39,7 +74,8 @@ function sentSystemPrompt(): string {
 }
 
 beforeEach(() => {
-  modelReply.mockResolvedValue('Yes, Nov 3 is open.');
+  modelReply.mockResolvedValue(text('Yes, Nov 3 is open.'));
+  runTool.mockResolvedValue(TOOL_RESULT);
 });
 
 afterEach(() => {
@@ -58,7 +94,7 @@ describe('ChatService', () => {
     });
 
     it("trims spaces and line breaks around the model's reply", async () => {
-      modelReply.mockResolvedValue('\n  Yes, Nov 3 is open.  \n');
+      modelReply.mockResolvedValue(text('\n  Yes, Nov 3 is open.  \n'));
 
       await expect(service.reply(QUESTION)).resolves.toEqual({
         reply: 'Yes, Nov 3 is open.',
@@ -67,7 +103,7 @@ describe('ChatService', () => {
     });
 
     it('replies that it cannot help when the model replies with nothing', async () => {
-      modelReply.mockResolvedValue('   ');
+      modelReply.mockResolvedValue(text('   '));
 
       await expect(service.reply(QUESTION)).resolves.toEqual({
         reply: CANNOT_HELP,
@@ -85,6 +121,12 @@ describe('ChatService', () => {
 
       expect(sentMessages()[0].role).toBe('system');
       expect(sentMessages().slice(1)).toEqual(messages);
+    });
+
+    it('gives the model the chat tools', async () => {
+      await service.reply(QUESTION);
+
+      expect(sentTools()).toEqual(CHAT_TOOLS);
     });
 
     it('tells the model the user is a guest without a staff id', async () => {
@@ -129,6 +171,78 @@ describe('ChatService', () => {
       expect(sentMessages().slice(1)).toEqual(
         messages.slice(-MAX_CHAT_MESSAGES),
       );
+    });
+
+    describe('tools', () => {
+      it('runs a tool the model asks for', async () => {
+        modelReply
+          .mockResolvedValueOnce(toolCall(AVAILABILITY_CALL))
+          .mockResolvedValueOnce(text('Yes, Nov 3 to Nov 5 is open.'));
+
+        await service.reply(QUESTION);
+
+        expect(runTool).toHaveBeenCalledWith(AVAILABILITY_CALL);
+      });
+
+      it('sends the tool call and its result back to the model', async () => {
+        modelReply
+          .mockResolvedValueOnce(toolCall(AVAILABILITY_CALL))
+          .mockResolvedValueOnce(text('Yes, Nov 3 to Nov 5 is open.'));
+
+        await service.reply(QUESTION);
+
+        expect(sentMessages(1).slice(-2)).toEqual([
+          { role: 'assistant', content: '', toolCalls: [AVAILABILITY_CALL] },
+          {
+            role: 'tool',
+            toolName: GET_AVAILABILITY_TOOL,
+            content: TOOL_RESULT,
+          },
+        ]);
+      });
+
+      it('returns the reply the model gives after the tool', async () => {
+        modelReply
+          .mockResolvedValueOnce(toolCall(AVAILABILITY_CALL))
+          .mockResolvedValueOnce(text('Yes, Nov 3 to Nov 5 is open.'));
+
+        await expect(service.reply(QUESTION)).resolves.toEqual({
+          reply: 'Yes, Nov 3 to Nov 5 is open.',
+          availabilityChanged: false,
+        });
+      });
+
+      it('runs every tool the model asks for in one turn', async () => {
+        const secondCall: ModelToolCall = {
+          name: GET_AVAILABILITY_TOOL,
+          arguments: { checkIn: '2026-11-10', checkOut: '2026-11-12' },
+        };
+        modelReply
+          .mockResolvedValueOnce({
+            content: '',
+            toolCalls: [AVAILABILITY_CALL, secondCall],
+          })
+          .mockResolvedValueOnce(text('Both stays are open.'));
+
+        await service.reply(QUESTION);
+
+        expect(runTool).toHaveBeenCalledTimes(2);
+        expect(runTool).toHaveBeenLastCalledWith(secondCall);
+      });
+
+      it(`asks for a final answer without tools after ${MAX_TOOL_ROUNDS} rounds`, async () => {
+        for (let round = 0; round < MAX_TOOL_ROUNDS; round += 1) {
+          modelReply.mockResolvedValueOnce(toolCall(AVAILABILITY_CALL));
+        }
+        modelReply.mockResolvedValueOnce(text('Nov 3 to Nov 5 is open.'));
+
+        await expect(service.reply(QUESTION)).resolves.toEqual({
+          reply: 'Nov 3 to Nov 5 is open.',
+          availabilityChanged: false,
+        });
+        expect(runTool).toHaveBeenCalledTimes(MAX_TOOL_ROUNDS);
+        expect(sentTools(MAX_TOOL_ROUNDS)).toEqual([]);
+      });
     });
 
     it('says the chat is unavailable when Ollama is not running', async () => {

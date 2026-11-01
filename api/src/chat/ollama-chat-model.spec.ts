@@ -1,10 +1,12 @@
 import { ConfigService } from '@nestjs/config';
 import { Ollama } from 'ollama';
+import { AVAILABILITY_TOOL } from './chat-tools';
 import {
   CHAT_CONTEXT_TOKENS,
   CHAT_REPLY_TOKENS,
   DEFAULT_OLLAMA_HOST,
   DEFAULT_OLLAMA_MODEL,
+  GET_AVAILABILITY_TOOL,
 } from './chat.constants';
 import type { ModelMessage } from './chat.types';
 import { OllamaChatModel } from './ollama-chat-model';
@@ -22,6 +24,8 @@ const MESSAGES: ModelMessage[] = [
   { role: 'user', content: 'Is Nov 3 open?' },
 ];
 
+const STAY = { checkIn: '2026-11-03', checkOut: '2026-11-05' };
+
 afterEach(() => {
   jest.clearAllMocks();
 });
@@ -36,7 +40,7 @@ describe('OllamaChatModel', () => {
       }),
     );
 
-    await model.reply(MESSAGES);
+    await model.reply(MESSAGES, []);
 
     expect(MockOllama).toHaveBeenCalledWith({
       host: 'http://ollama.test:11434',
@@ -50,7 +54,7 @@ describe('OllamaChatModel', () => {
     chat.mockResolvedValue({ message: { content: 'Hi' } });
     const model = new OllamaChatModel(new ConfigService({}));
 
-    await model.reply(MESSAGES);
+    await model.reply(MESSAGES, []);
 
     expect(MockOllama).toHaveBeenCalledWith({ host: DEFAULT_OLLAMA_HOST });
     expect(chat).toHaveBeenCalledWith(
@@ -62,11 +66,12 @@ describe('OllamaChatModel', () => {
     chat.mockResolvedValue({ message: { content: 'Hi' } });
     const model = new OllamaChatModel(new ConfigService({}));
 
-    await model.reply(MESSAGES);
+    await model.reply(MESSAGES, []);
 
     expect(chat).toHaveBeenCalledWith({
       model: DEFAULT_OLLAMA_MODEL,
       messages: MESSAGES,
+      tools: [],
       stream: false,
       think: false,
       options: {
@@ -76,11 +81,87 @@ describe('OllamaChatModel', () => {
     });
   });
 
-  it("returns the model's reply", async () => {
+  it('sends the tools in the format Ollama expects', async () => {
+    chat.mockResolvedValue({ message: { content: 'Hi' } });
+    const model = new OllamaChatModel(new ConfigService({}));
+
+    await model.reply(MESSAGES, [AVAILABILITY_TOOL]);
+
+    expect(chat).toHaveBeenCalledWith(
+      expect.objectContaining({
+        tools: [
+          {
+            type: 'function',
+            function: {
+              name: GET_AVAILABILITY_TOOL,
+              description: AVAILABILITY_TOOL.description,
+              parameters: AVAILABILITY_TOOL.parameters,
+            },
+          },
+        ],
+      }),
+    );
+  });
+
+  it('sends earlier tool calls and tool results in the format Ollama expects', async () => {
+    chat.mockResolvedValue({ message: { content: 'Hi' } });
+    const model = new OllamaChatModel(new ConfigService({}));
+
+    await model.reply(
+      [
+        ...MESSAGES,
+        {
+          role: 'assistant',
+          content: '',
+          toolCalls: [{ name: GET_AVAILABILITY_TOOL, arguments: STAY }],
+        },
+        { role: 'tool', toolName: GET_AVAILABILITY_TOOL, content: '{}' },
+      ],
+      [],
+    );
+
+    expect(chat).toHaveBeenCalledWith(
+      expect.objectContaining({
+        messages: [
+          ...MESSAGES,
+          {
+            role: 'assistant',
+            content: '',
+            tool_calls: [
+              { function: { name: GET_AVAILABILITY_TOOL, arguments: STAY } },
+            ],
+          },
+          { role: 'tool', tool_name: GET_AVAILABILITY_TOOL, content: '{}' },
+        ],
+      }),
+    );
+  });
+
+  it("returns the model's reply with no tool calls", async () => {
     chat.mockResolvedValue({ message: { content: 'Yes, Nov 3 is open.' } });
     const model = new OllamaChatModel(new ConfigService({}));
 
-    await expect(model.reply(MESSAGES)).resolves.toBe('Yes, Nov 3 is open.');
+    await expect(model.reply(MESSAGES, [])).resolves.toEqual({
+      content: 'Yes, Nov 3 is open.',
+      toolCalls: [],
+    });
+  });
+
+  it('returns the tools the model asks for', async () => {
+    chat.mockResolvedValue({
+      message: {
+        content: '',
+        tool_calls: [
+          { function: { name: GET_AVAILABILITY_TOOL, arguments: STAY } },
+        ],
+      },
+    });
+    const model = new OllamaChatModel(new ConfigService({}));
+
+    await expect(model.reply(MESSAGES, [AVAILABILITY_TOOL])).resolves.toEqual({
+      content: '',
+      toolCalls: [{ name: GET_AVAILABILITY_TOOL, arguments: STAY }],
+    });
   });
 
   it('passes on errors from Ollama unchanged', async () => {
@@ -88,6 +169,6 @@ describe('OllamaChatModel', () => {
     chat.mockRejectedValue(failure);
     const model = new OllamaChatModel(new ConfigService({}));
 
-    await expect(model.reply(MESSAGES)).rejects.toBe(failure);
+    await expect(model.reply(MESSAGES, [])).rejects.toBe(failure);
   });
 });

@@ -17,13 +17,18 @@ import {
   LAST_MESSAGE_NOT_FROM_USER,
   MAX_CHAT_MESSAGES,
   MAX_MESSAGE_LENGTH,
+  MAX_TOOL_ROUNDS,
 } from './chat.constants';
+import { CHAT_TOOLS, ChatTools } from './chat-tools';
 import type {
   ChatAudience,
   ChatMessage,
   ChatModel,
   ChatResponse,
   ModelMessage,
+  ModelReply,
+  ModelTool,
+  ModelToolCall,
 } from './chat.types';
 import { isModelUnavailable } from './model-errors';
 
@@ -32,6 +37,7 @@ export class ChatService {
   constructor(
     @Inject(CHAT_MODEL) private readonly model: ChatModel,
     @Inject(CLOCK) private readonly clock: Clock,
+    private readonly tools: ChatTools,
   ) {}
 
   async reply(
@@ -44,7 +50,7 @@ export class ChatService {
     }
     const audience: ChatAudience = staffId === undefined ? 'guest' : 'staff';
     const reply = trimText(
-      await this.modelReply(this.modelMessages(messages, audience)),
+      await this.answer(this.modelMessages(messages, audience)),
     );
     return {
       reply: reply === '' ? CANNOT_HELP : reply,
@@ -52,9 +58,45 @@ export class ChatService {
     };
   }
 
-  private async modelReply(messages: ModelMessage[]): Promise<string> {
+  private async answer(messages: ModelMessage[]): Promise<string> {
+    let conversation = messages;
+    for (let round = 0; round < MAX_TOOL_ROUNDS; round += 1) {
+      const reply = await this.modelReply(conversation, CHAT_TOOLS);
+      if (reply.toolCalls.length === 0) {
+        return reply.content;
+      }
+      conversation = [
+        ...conversation,
+        {
+          role: 'assistant',
+          content: reply.content,
+          toolCalls: reply.toolCalls,
+        },
+        ...(await this.toolResults(reply.toolCalls)),
+      ];
+    }
+    const finalReply = await this.modelReply(conversation, []);
+    return finalReply.content;
+  }
+
+  private async toolResults(calls: ModelToolCall[]): Promise<ModelMessage[]> {
+    const results: ModelMessage[] = [];
+    for (const call of calls) {
+      results.push({
+        role: 'tool',
+        toolName: call.name,
+        content: await this.tools.run(call),
+      });
+    }
+    return results;
+  }
+
+  private async modelReply(
+    messages: ModelMessage[],
+    tools: ModelTool[],
+  ): Promise<ModelReply> {
     try {
-      return await this.model.reply(messages);
+      return await this.model.reply(messages, tools);
     } catch (error) {
       if (isModelUnavailable(error)) {
         throw new ServiceUnavailableException(CHAT_UNAVAILABLE);
