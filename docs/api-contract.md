@@ -11,7 +11,7 @@ NestJS REST API. All paths start with `/api` (the Next.js rewrite forwards them 
 | POST | `/api/auth/signup` | None | User Story 3: Staff sign up |
 | POST | `/api/auth/login` | None | User Story 4: Staff log in |
 | POST | `/api/auth/logout` | None | User Story 4: Staff log out |
-| GET | `/api/auth/me` | Staff | User Story 4: Show log out on the home page |
+| GET | `/api/auth/me` | Staff | User Story 4: Show Bookings and log out on the home page |
 | GET | `/api/bookings` | Staff | User Story 5: View bookings |
 | GET | `/api/bookings/by-number/:bookingNumber` | Staff | User Story 10: Chat cancel (look up the booking) |
 | POST | `/api/bookings/:id/cancel` | Staff | User Story 6: Cancel |
@@ -140,7 +140,7 @@ User Story 4.
 
 ## GET /api/auth/me
 
-User Story 4. Returns the logged-in staff member. The home page uses it to show "Log out" instead of "Staff log in" in the header.
+User Story 4. Returns the logged-in staff member. The home page uses it to show "Bookings" and "Log out" instead of "Staff log in" in the header.
 
 **Response `200`**
 ```json

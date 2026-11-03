@@ -1,19 +1,24 @@
-'use client';
-
 import TextLink from '@/components/shared/TextLink';
-import { useCurrentStaff } from '@/hooks/useCurrentStaff';
 import HomeHeaderActionsSkeleton from './HomeHeaderActionsSkeleton';
 import LogoutButton from './LogoutButton';
 
-export default function HomeHeaderActions() {
-  const { loading, data: staff, refetch } = useCurrentStaff();
+type HomeHeaderActionsProps = {
+  loading: boolean;
+  isStaff: boolean;
+  onLoggedOut: () => void;
+};
 
+export default function HomeHeaderActions({
+  loading,
+  isStaff,
+  onLoggedOut,
+}: HomeHeaderActionsProps) {
   if (loading) {
     return <HomeHeaderActionsSkeleton />;
   }
 
-  if (staff) {
-    return <LogoutButton onLoggedOut={refetch} />;
+  if (isStaff) {
+    return <LogoutButton onLoggedOut={onLoggedOut} />;
   }
 
   return <TextLink href="/staff/login">Staff log in</TextLink>;
