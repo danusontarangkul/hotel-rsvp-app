@@ -1,9 +1,4 @@
-import {
-  isBookingRequest,
-  isCancelRequest,
-  isNo,
-  isYes,
-} from './chat-answers';
+import { isBookingRequest, isCancelRequest, isNo, isYes } from './chat-answers';
 
 describe('isCancelRequest', () => {
   it.each([
