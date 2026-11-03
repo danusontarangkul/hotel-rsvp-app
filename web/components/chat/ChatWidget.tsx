@@ -10,6 +10,7 @@ import { useCreateBooking } from '@/hooks/useCreateBooking';
 import { useCurrentStaff } from '@/hooks/useCurrentStaff';
 import { useFindBooking } from '@/hooks/useFindBooking';
 import { announceAvailabilityChanged } from '@/lib/availability-events';
+import { isBookingRequest, isCancelRequest } from '@/lib/chat-answers';
 import { toFormErrors } from '@/lib/form-errors';
 import type { ChatTurn } from '@/lib/types';
 import ChatPanel from './ChatPanel';
@@ -166,11 +167,11 @@ export default function ChatWidget() {
       );
       return;
     }
-    if (content === CANCEL_OPTION && isStaff) {
+    if (isStaff && (content === CANCEL_OPTION || isCancelRequest(content))) {
       await continueCancel(conversation, startCancelFlow());
       return;
     }
-    if (content === BOOK_STAY_OPTION) {
+    if (content === BOOK_STAY_OPTION || isBookingRequest(content)) {
       await continueBooking(conversation, startBookingFlow());
       return;
     }
