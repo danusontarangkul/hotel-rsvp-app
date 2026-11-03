@@ -18,14 +18,14 @@
 - "Availability" → the fixed reply "What date(s) are you asking about availability for?" without calling the API → the guest types dates → the model answers whether they're available.
 - "FAQs" → the fixed reply "What would you like to know?" without calling the API → the guest types a question → the model answers from the FAQ, or says it can't help.
 - The fixed replies are `FIXED_REPLIES` in `components/chat/chatCopy.ts`.
-- "Book" → a fixed step-by-step flow that never calls the model (`components/chat/bookingFlow.ts`), one question at a time:
+- "Book", or a typed request to book like "I want to book" or "Can I make a reservation?" (`isBookingRequest` in `lib/chat-answers.ts`) → a fixed step-by-step flow that never calls the model (`components/chat/bookingFlow.ts`), one question at a time. Questions about booking, like "Do I need to book in advance?", still go to the model:
   1. "What is your check-in date?" → "What is your check-out date?" Dates can be typed like "Nov 12", "11/12" or "2026-11-12"; with no year it uses this year, or next year if the date has passed.
   2. GET `/api/availability` → if free, "<check-in> to <check-out> is available. Is that right?" with Yes/No buttons. If not free or too early, it says why and asks for the check-in date again. No starts the dates again.
   3. "What is your full name?" → "What is your phone number?" (10 digits) → "What is your email address?" Each is checked before moving on.
   4. All the details are repeated with "Shall I book it?" and Yes/No buttons.
   5. Yes → POST `/api/bookings` → "You're booked from … Your booking number is …" and the calendar reloads. No → "No problem, nothing was booked."
   6. If the booking fails because the dates were just taken, it asks for new dates; any other failure offers to try again.
-- "Cancel" shows only for logged-in staff (GET `/api/auth/me`), after the other three. It's a fixed flow that never calls the model (`components/chat/cancelFlow.ts`):
+- "Cancel" shows only for logged-in staff (GET `/api/auth/me`), after the other three. Staff can also type a request to cancel, like "I want to cancel a booking" (`isCancelRequest` in `lib/chat-answers.ts`); questions like "What is the cancellation policy?" still go to the model, and a guest's request to cancel always goes to the model. It's a fixed flow that never calls the model (`components/chat/cancelFlow.ts`):
   1. "What is the confirmation ID?" → GET `/api/bookings/by-number/:bookingNumber` (spaces removed, uppercased). Not found → it says so and asks again.
   2. Found → shows the booking number, name, phone, email, check-in and check-out, a warning that cancelling can't be undone, and asks the staff member to type `CONFIRM` exactly. An already-cancelled booking says so and ends.
   3. Exactly `CONFIRM` → POST `/api/bookings/:id/cancel` → "Booking … is cancelled. Its dates are open again." and the calendar and staff bookings list reload. Anything else → "No problem, nothing was cancelled."

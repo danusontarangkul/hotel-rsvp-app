@@ -220,7 +220,10 @@ Book a stay first (for example two nights next week) so you have booked and free
 | 11.18 | Scroll through the whole conversation. | Every question and reply shows once, with nothing doubled. | | |
 | 11.19 | **Dates taken during the flow:** in window A, go through the chat flow up to "Shall I book it?". In window B, book the same dates. Then click "Yes" in window A. | "Sorry, those dates were just booked by someone else. What check-in date would you like instead?" Only window B's booking exists. | | |
 | 11.20 | **Without the model:** stop Ollama, then go through the whole Book flow. | It still works from start to finish, because the Book flow doesn't use the model. | | |
-| 11.21 | **Typed booking without details:** instead of the button, type "Book Dec 3 to Dec 5". When it asks to confirm, answer "yes" without giving a name, email or phone. | It asks for your name, email and phone. Nothing is booked, and the staff page shows no booking with made-up details like "Guest Name". | | |
+| 11.21 | **Booking through the model without details:** type "Are Dec 3 to Dec 5 free? Then book them for me." When it asks to confirm, answer "yes" without giving a name, email or phone. | It asks for your name, email and phone. Nothing is booked, and the staff page shows no booking with made-up details like "Guest Name". | | |
+| 11.22 | **Typed request to book:** reload, then instead of the button type "I want to book a room". | "What is your check-in date?" straight away, the same as clicking "Book". | | |
+| 11.23 | Reload and type "Can I make a reservation?". | "What is your check-in date?" | | |
+| 11.24 | Reload and type "Do I need to book in advance?". | The model answers the question from the FAQ. The booking steps don't start. | | |
 
 ## 12. Chat: staff cancel (User Story 10)
 
@@ -237,8 +240,10 @@ Log in as staff for this section, except where it says guest.
 | 12.7 | Without reloading, look at the staff bookings list (or the calendar on `/`). | The booking already shows as "Cancelled" (or its nights are already free). | | |
 | 12.8 | Click "Cancel" again and give the same booking number. | "Booking … is already cancelled. Nothing was changed." | | |
 | 12.9 | Logged out, run `curl -i http://localhost:3001/api/bookings/by-number/<booking number>`. | `401 Unauthorized`. | | |
-| 12.10 | As staff, type "cancel booking <booking number>" instead of clicking the button. | Nothing is cancelled. The reply points you to the Cancel button or the bookings page. | | |
-| 12.11 | Scroll through the conversation. | Every message shows once. | | |
+| 12.10 | As staff, reload and type "I want to cancel a booking" instead of clicking the button. | "What is the confirmation ID?" straight away, the same as clicking "Cancel". | | |
+| 12.11 | As staff, reload and type "What is the cancellation policy?". | The model answers from the FAQ. The cancel steps don't start. | | |
+| 12.12 | As a guest (logged out), type "I want to cancel a booking". | The cancel steps don't start. The reply says you don't have permission or can't help. | | |
+| 12.13 | Scroll through the conversation. | Every message shows once. | | |
 
 ## 13. Chat: errors and safety
 

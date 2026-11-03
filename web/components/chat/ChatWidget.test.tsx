@@ -275,6 +275,21 @@ describe('ChatWidget', () => {
       expect(lastReply()).toBe('Assistant: What is your check-in date?');
     });
 
+    it('starts the booking steps when the guest types that they want to book', async () => {
+      await openChat();
+      await say('I want to book a room');
+
+      expect(lastReply()).toBe('Assistant: What is your check-in date?');
+      expect(mockSendChat).not.toHaveBeenCalled();
+    });
+
+    it('sends a question about booking to the model', async () => {
+      await openChat();
+      await say('Do I need to book in advance?');
+
+      expect(mockSendChat).toHaveBeenCalledTimes(1);
+    });
+
     function replies(): string[] {
       return screen
         .getAllByRole('listitem')
@@ -533,6 +548,23 @@ describe('ChatWidget', () => {
           .getAllByRole('button')
           .map((button) => button.textContent),
       ).toEqual(['Availability', 'Book', 'FAQs', 'Cancel']);
+    });
+
+    it('starts the cancel steps when staff type that they want to cancel', async () => {
+      await openAsStaff();
+      await say('I want to cancel a booking');
+
+      expect(lastMessage()).toBe('Assistant: What is the confirmation ID?');
+      expect(mockSendChat).not.toHaveBeenCalled();
+    });
+
+    it('sends a guest asking to cancel to the model', async () => {
+      await openChat();
+      await screen.findByRole('button', { name: 'Availability' });
+      await say('I want to cancel a booking');
+
+      expect(mockSendChat).toHaveBeenCalledTimes(1);
+      expect(mockFindBookingByNumber).not.toHaveBeenCalled();
     });
 
     it('asks for the confirmation ID', async () => {
