@@ -116,10 +116,10 @@ A checklist for testing every functional requirement by hand, including the erro
 | 5.6 | **Wrong password:** log in with a registered email and the wrong password. | "Wrong email or password." shows. You stay on the page, and the email stays filled in. | | |
 | 5.7 | **Unknown email:** log in with an email that isn't registered. | The same "Wrong email or password." message. Nothing says whether the email exists. | | |
 | 5.8 | **Staff pages need a login:** while logged out, open `/staff/bookings` directly. | You're sent to `/staff/login`. | | |
-| 5.9 | Logged in, open `/`. | The header shows "Log out" instead of "Staff log in". | | |
-| 5.10 | Logged out, open `/`. | The header shows "Staff log in". | | |
+| 5.9 | Logged in, open `/`. | The header shows a "Bookings" link and "Log out" instead of "Staff log in". Clicking "Bookings" opens `/staff/bookings`. | | |
+| 5.10 | Logged out, open `/`. | The header shows "Staff log in" and no "Bookings" link. | | |
 | 5.11 | On `/staff/bookings`, click "Log out". | You land on `/` and the header shows "Staff log in". | | |
-| 5.12 | Logged in on `/`, click "Log out". | You stay on `/` and the header switches to "Staff log in". | | |
+| 5.12 | Logged in on `/`, click "Log out". | You stay on `/`, the "Bookings" link disappears, and the header switches to "Staff log in". | | |
 | 5.13 | After logging out, open `/staff/bookings`. | You're sent to `/staff/login`. | | |
 | 5.14 | Log in, close the browser, reopen it and open `/staff/bookings`. | You're still logged in (the login lasts 7 days). | | |
 | 5.15 | Logged in, delete the `token` cookie in DevTools (Application → Cookies) and reload `/staff/bookings`. | You're sent to `/staff/login`. | | |

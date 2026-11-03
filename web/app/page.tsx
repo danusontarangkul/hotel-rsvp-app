@@ -1,14 +1,13 @@
-import HomeHeaderActions from '@/components/auth/HomeHeaderActions';
+import HomeHeader from '@/components/auth/HomeHeader';
 import BookingSection from '@/components/booking/BookingSection';
 import ChatWidget from '@/components/chat/ChatWidget';
 import Page from '@/components/shared/Page';
 import PageHeading from '@/components/shared/PageHeading';
-import SiteHeader from '@/components/shared/SiteHeader';
 
 export default function Home() {
   return (
     <>
-      <SiteHeader actions={<HomeHeaderActions />} />
+      <HomeHeader />
       <Page>
         <PageHeading>Book the room</PageHeading>
         <BookingSection />
